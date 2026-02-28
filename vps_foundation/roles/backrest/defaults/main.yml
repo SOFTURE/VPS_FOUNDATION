@@ -1,0 +1,23 @@
+---
+backrest_enabled: false
+backrest_container_name: backrest
+backrest_image: ghcr.io/garethgeorge/backrest:latest
+backrest_restart_policy: always
+
+backrest_data_dir: /opt/services/backrest/data
+backrest_config_dir: /opt/services/backrest/config
+backrest_cache_dir: /opt/services/backrest/cache
+backrest_backup_dir: /opt/backups
+
+backrest_network: app-network
+
+backrest_extra_networks: []
+backrest_extra_volumes: []
+backrest_extra_env: {}
+
+backrest_azure_account_name: ""
+backrest_azure_account_key: ""
+
+backrest_memory_limit: ""
+backrest_memory_reservation: ""
+backrest_cpus: ""

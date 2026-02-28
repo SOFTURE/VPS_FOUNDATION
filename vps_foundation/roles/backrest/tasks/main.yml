@@ -1,0 +1,70 @@
+---
+- name: Validate required variables
+  ansible.builtin.assert:
+    that:
+      - backrest_azure_account_name | length > 0
+      - backrest_azure_account_key | length > 0
+    fail_msg: "Required variables: backrest_azure_account_name, backrest_azure_account_key"
+  when: backrest_enabled | bool
+
+- name: Create Backrest directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0750'
+  loop:
+    - "{{ backrest_data_dir }}"
+    - "{{ backrest_config_dir }}"
+    - "{{ backrest_cache_dir }}"
+    - "{{ backrest_backup_dir }}"
+  when: backrest_enabled | bool
+  tags: backrest
+
+- name: Build network list
+  ansible.builtin.set_fact:
+    backrest_networks: "{{ [{'name': backrest_network}] + (backrest_extra_networks | map('community.general.dict_kw', name='name') | list) }}"
+  tags: backrest
+
+- name: Build volume list
+  ansible.builtin.set_fact:
+    backrest_volumes: >-
+      {{
+        [
+          backrest_data_dir ~ ':/data',
+          backrest_config_dir ~ ':/config',
+          backrest_cache_dir ~ ':/cache',
+          backrest_backup_dir ~ ':/backups',
+          '/var/run/docker.sock:/var/run/docker.sock'
+        ] + backrest_extra_volumes
+      }}
+  tags: backrest
+
+- name: Start Backrest container
+  community.docker.docker_container:
+    name: "{{ backrest_container_name }}"
+    image: "{{ backrest_image }}"
+    hostname: "{{ backrest_container_name }}"
+    state: started
+    recreate: true
+    restart_policy: "{{ backrest_restart_policy }}"
+    env: >-
+      {{
+        {
+          'BACKREST_DATA': '/data',
+          'BACKREST_CONFIG': '/config/config.json',
+          'XDG_CACHE_HOME': '/cache',
+          'TMPDIR': '/tmp',
+          'TZ': 'Europe/Warsaw',
+          'AZURE_ACCOUNT_NAME': backrest_azure_account_name,
+          'AZURE_ACCOUNT_KEY': backrest_azure_account_key
+        } | combine(backrest_extra_env)
+      }}
+    volumes: "{{ backrest_volumes }}"
+    networks: "{{ backrest_networks }}"
+    memory: "{{ backrest_memory_limit | default(omit, true) }}"
+    memory_reservation: "{{ backrest_memory_reservation | default(omit, true) }}"
+    cpus: "{{ backrest_cpus | default(omit, true) }}"
+  when: backrest_enabled | bool
+  tags: backrest

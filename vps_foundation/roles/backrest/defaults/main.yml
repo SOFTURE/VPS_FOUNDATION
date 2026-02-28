@@ -9,6 +9,7 @@ backrest_config_dir: /opt/services/backrest/config
 backrest_cache_dir: /opt/services/backrest/cache
 backrest_backup_dir: /opt/backups
 
+backrest_config_path: ""
 backrest_network: app-network
 
 backrest_extra_networks: []

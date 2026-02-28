@@ -22,6 +22,19 @@
   when: backrest_enabled | bool
   tags: backrest
 
+- name: Copy Backrest config
+  ansible.builtin.copy:
+    src: "{{ backrest_config_path }}"
+    dest: "{{ backrest_config_dir }}/config.json"
+    owner: root
+    group: root
+    mode: '0600'
+    force: false
+  when:
+    - backrest_enabled | bool
+    - backrest_config_path | default('', true) | length > 0
+  tags: backrest
+
 - name: Build network list
   ansible.builtin.set_fact:
     backrest_networks: "{{ [{'name': backrest_network}] + (backrest_extra_networks | map('community.general.dict_kw', name='name') | list) }}"

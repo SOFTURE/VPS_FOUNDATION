@@ -15,8 +15,8 @@ backrest_extra_networks: []
 backrest_extra_volumes: []
 backrest_extra_env: {}
 
-backrest_azure_account_name: ""
-backrest_azure_account_key: ""
+backrest_azure_account_name: "{{ backrest_azure_account_name }}"
+backrest_azure_account_key: "{{ backrest_azure_account_key }}"
 
 backrest_memory_limit: ""
 backrest_memory_reservation: ""

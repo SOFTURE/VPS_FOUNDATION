@@ -27,7 +27,9 @@
     src: "{{ caddy_config_path }}"
     dest: /opt/services/caddy/config/Caddyfile
     mode: '0644'
+    force: true
   when: caddy_config_path != ""
+  notify: Reload Caddy
   tags: caddy
 
 - name: Start Caddy container

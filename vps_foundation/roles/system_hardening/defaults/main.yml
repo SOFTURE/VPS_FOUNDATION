@@ -3,7 +3,8 @@ vps_app_user: "{{ vps_app_user }}"
 vps_app_group: "{{ vps_app_group | default(vps_app_user) }}"
 vps_app_user_shell: /bin/bash
 vps_app_user_home: "/home/{{ vps_app_user }}"
-vps_app_user_ssh_public_key: ""
+vps_app_user_ssh_public_key_local: ""
+vps_app_user_ssh_public_key_github_actions: ""
 vps_prompt_for_ssh_key: true
 
 vps_timezone: "{{ vps_timezone }}"

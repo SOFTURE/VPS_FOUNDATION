@@ -26,59 +26,76 @@
     mode: '0700'
   tags: users
 
-- name: Check if authorized_keys already exists
-  ansible.builtin.stat:
-    path: "{{ vps_app_user_home }}/.ssh/authorized_keys"
-  register: authorized_keys_file
-  tags: users
-
-- name: Prompt for SSH public key if not provided
+- name: Prompt for Local Machine SSH public key if not provided
   ansible.builtin.pause:
     prompt: |
 
       ================================================================================
-      SSH PUBLIC KEY REQUIRED
+      LOCAL MACHINE - SSH PUBLIC KEY REQUIRED
       ================================================================================
-      Password authentication will be disabled after this playbook runs.
-
-      Please paste your SSH PUBLIC key (starts with 'ssh-rsa', 'ssh-ed25519', etc.):
-  register: ssh_key_prompt
+      Please paste your LOCAL MACHINE SSH PUBLIC key (starts with 'ssh-rsa', 'ssh-ed25519', etc.):
+  register: ssh_key_prompt_local
   when:
     - vps_prompt_for_ssh_key | bool
-    - vps_app_user_ssh_public_key | length == 0
-    - not authorized_keys_file.stat.exists
+    - vps_app_user_ssh_public_key_local | length == 0
   tags: users
 
-- name: Set SSH public key from prompt
+- name: Set Local Machine SSH public key from prompt
   ansible.builtin.set_fact:
-    vps_app_user_ssh_public_key: "{{ ssh_key_prompt.user_input | trim }}"
+    vps_app_user_ssh_public_key_local: "{{ ssh_key_prompt_local.user_input | trim }}"
   when:
-    - ssh_key_prompt is defined
-    - ssh_key_prompt.user_input is defined
-    - ssh_key_prompt.user_input | trim | length > 0
+    - ssh_key_prompt_local is defined
+    - ssh_key_prompt_local.user_input is defined
+    - ssh_key_prompt_local.user_input | trim | length > 0
   tags: users
 
-- name: Validate SSH key is provided before continuing
+- name: Prompt for GitHub Actions SSH public key if not provided
+  ansible.builtin.pause:
+    prompt: |
+
+      ================================================================================
+      GITHUB ACTIONS - SSH PUBLIC KEY REQUIRED
+      ================================================================================
+      Please paste your GITHUB ACTIONS SSH PUBLIC key (starts with 'ssh-rsa', 'ssh-ed25519', etc.):
+  register: ssh_key_prompt_github_actions
+  when:
+    - vps_prompt_for_ssh_key | bool
+    - vps_app_user_ssh_public_key_github_actions | length == 0
+  tags: users
+
+- name: Set GitHub Actions SSH public key from prompt
+  ansible.builtin.set_fact:
+    vps_app_user_ssh_public_key_github_actions: "{{ ssh_key_prompt_github_actions.user_input | trim }}"
+  when:
+    - ssh_key_prompt_github_actions is defined
+    - ssh_key_prompt_github_actions.user_input is defined
+    - ssh_key_prompt_github_actions.user_input | trim | length > 0
+  tags: users
+
+- name: Validate both SSH keys are provided
   ansible.builtin.fail:
     msg: |
-      No SSH public key provided!
-      You must provide an SSH public key via:
-        - vps_app_user_ssh_public_key variable, OR
-        - Interactive prompt during playbook run
-
-      Without an SSH key, you will be locked out of the server!
-  when:
-    - vps_app_user_ssh_public_key | length == 0
-    - not authorized_keys_file.stat.exists
+      Both SSH public keys are required!
+      Missing: {{ 'Local Machine key' if vps_app_user_ssh_public_key_local | length == 0 else '' }}{{ ' and ' if vps_app_user_ssh_public_key_local | length == 0 and vps_app_user_ssh_public_key_github_actions | length == 0 else '' }}{{ 'GitHub Actions key' if vps_app_user_ssh_public_key_github_actions | length == 0 else '' }}
+  when: vps_app_user_ssh_public_key_local | length == 0 or vps_app_user_ssh_public_key_github_actions | length == 0
   tags: users
 
-- name: Add SSH public key for application user
+- name: Write Local Machine SSH public key (exclusive - overwrites authorized_keys)
   ansible.posix.authorized_key:
     user: "{{ vps_app_user }}"
-    key: "{{ vps_app_user_ssh_public_key }}"
+    key: "{{ vps_app_user_ssh_public_key_local }}"
+    comment: "local-machine"
+    state: present
+    exclusive: true
+  tags: users
+
+- name: Add GitHub Actions SSH public key
+  ansible.posix.authorized_key:
+    user: "{{ vps_app_user }}"
+    key: "{{ vps_app_user_ssh_public_key_github_actions }}"
+    comment: "github-actions"
     state: present
     exclusive: false
-  when: vps_app_user_ssh_public_key | length > 0
   tags: users
 
 - name: Ensure correct permissions on authorized_keys
@@ -87,16 +104,14 @@
     owner: "{{ vps_app_user }}"
     group: "{{ vps_app_group }}"
     mode: '0600'
-  when: vps_app_user_ssh_public_key | length > 0
   tags: users
 
-- name: Verify SSH key was written correctly
+- name: Verify both SSH keys were written correctly
   ansible.builtin.command:
     cmd: "grep -c 'ssh-' {{ vps_app_user_home }}/.ssh/authorized_keys"
   register: ssh_key_check
   changed_when: false
-  failed_when: ssh_key_check.rc != 0 or ssh_key_check.stdout | int < 1
-  when: vps_app_user_ssh_public_key | length > 0
+  failed_when: ssh_key_check.rc != 0 or ssh_key_check.stdout | int < 2
   tags: users
 
 - name: Set up passwordless sudo for application user

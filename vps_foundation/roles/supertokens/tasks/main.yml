@@ -28,14 +28,13 @@
   tags: supertokens
 
 - name: Wait for SuperTokens to be ready
-  ansible.builtin.uri:
-    url: "http://{{ supertokens_container_name }}:3567/hello"
-    method: GET
-    status_code: 200
+  ansible.builtin.command:
+    cmd: "docker exec {{ supertokens_container_name }} curl -sf http://localhost:3567/hello"
   register: supertokens_health
-  until: supertokens_health.status == 200
+  until: supertokens_health.rc == 0
   retries: 30
   delay: 5
+  changed_when: false
   when: supertokens_enabled
   ignore_errors: true
   tags: supertokens

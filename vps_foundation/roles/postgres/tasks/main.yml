@@ -106,6 +106,7 @@
       PGADMIN_DEFAULT_PASSWORD: "{{ pgadmin_password }}"
       PGADMIN_CONFIG_WTF_CSRF_ENABLED: "False"
       PGADMIN_CONFIG_SERVER_MODE: "True"
+      PGADMIN_CONFIG_ENHANCED_COOKIE_PROTECTION: "False"
     volumes:
       - pgadmin_data:/var/lib/pgadmin
     networks:

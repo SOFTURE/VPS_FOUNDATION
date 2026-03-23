@@ -13,6 +13,7 @@
     services_typesense_enabled: false
     services_portainer_enabled: false
     services_supertokens_enabled: false
+    services_pgadmin_enabled: false
     services_network: app-network
 
   pre_tasks:
@@ -36,58 +37,60 @@
           - "Typesense: {{ services_typesense_enabled }}"
           - "Portainer: {{ services_portainer_enabled }}"
           - "SuperTokens: {{ services_supertokens_enabled }}"
+          - "PgAdmin: {{ services_pgadmin_enabled }}"
 
   roles:
-    - role: jarmatys.vps_foundation.postgres
+    - role: softure.vps_foundation.postgres
       vars:
         postgres_enabled: "{{ services_postgres_enabled }}"
+        pgadmin_enabled: "{{ services_pgadmin_enabled }}"
         postgres_network: "{{ services_network }}"
       when: services_postgres_enabled
       tags: [postgres, database]
 
-    - role: jarmatys.vps_foundation.mssql
+    - role: softure.vps_foundation.mssql
       vars:
         mssql_enabled: "{{ services_mssql_enabled }}"
         mssql_network: "{{ services_network }}"
       when: services_mssql_enabled
       tags: [mssql, database]
 
-    - role: jarmatys.vps_foundation.rabbitmq
+    - role: softure.vps_foundation.rabbitmq
       vars:
         rabbitmq_enabled: "{{ services_rabbitmq_enabled }}"
         rabbitmq_network: "{{ services_network }}"
       when: services_rabbitmq_enabled
       tags: [rabbitmq, messaging]
 
-    - role: jarmatys.vps_foundation.caddy
+    - role: softure.vps_foundation.caddy
       vars:
         caddy_enabled: "{{ services_caddy_enabled }}"
         caddy_network: "{{ services_network }}"
       when: services_caddy_enabled
       tags: [caddy, proxy]
 
-    - role: jarmatys.vps_foundation.seq
+    - role: softure.vps_foundation.seq
       vars:
         seq_enabled: "{{ services_seq_enabled }}"
         seq_network: "{{ services_network }}"
       when: services_seq_enabled
       tags: [seq, logging]
 
-    - role: jarmatys.vps_foundation.typesense
+    - role: softure.vps_foundation.typesense
       vars:
         typesense_enabled: "{{ services_typesense_enabled }}"
         typesense_network: "{{ services_network }}"
       when: services_typesense_enabled
       tags: [typesense, search]
 
-    - role: jarmatys.vps_foundation.portainer
+    - role: softure.vps_foundation.portainer
       vars:
         portainer_enabled: "{{ services_portainer_enabled }}"
         portainer_network: "{{ services_network }}"
       when: services_portainer_enabled
       tags: [portainer, management]
 
-    - role: jarmatys.vps_foundation.supertokens
+    - role: softure.vps_foundation.supertokens
       vars:
         supertokens_enabled: "{{ services_supertokens_enabled }}"
         supertokens_network: "{{ services_network }}"

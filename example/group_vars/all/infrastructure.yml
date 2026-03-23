@@ -1,0 +1,104 @@
+---
+# =============================================================================
+# PostgreSQL
+# =============================================================================
+
+postgres_db: myproject_db
+postgres_user: myproject
+postgres_password: "CHANGE_ME_postgres_password"
+
+postgres_init_script_path: "{{ playbook_dir }}/../files/init.sql"
+postgres_extra_env: {}
+
+# =============================================================================
+# PgAdmin
+# =============================================================================
+
+pgadmin_email: admin@example.com
+pgadmin_password: "CHANGE_ME_pgadmin_password"
+
+# =============================================================================
+# MSSQL
+# =============================================================================
+
+mssql_sa_password: "CHANGE_ME_mssql_password"
+mssql_max_server_memory_mb: ""
+mssql_extra_env: {}
+
+# =============================================================================
+# RabbitMQ
+# =============================================================================
+
+rabbitmq_user: myproject
+rabbitmq_password: "CHANGE_ME_rabbitmq_password"
+rabbitmq_config_path: ""
+rabbitmq_plugins: []
+rabbitmq_extra_env: {}
+
+# =============================================================================
+# Caddy
+# =============================================================================
+
+caddy_config_path: "{{ playbook_dir }}/../files/Caddyfile.j2"
+caddy_use_cloudflare: true
+caddy_cloudflare_token: "your-cloudflare-api-token"
+caddy_extra_env: {}
+
+# =============================================================================
+# Seq
+# =============================================================================
+
+seq_accept_eula: true
+seq_first_run_no_auth: true
+seq_extra_env: {}
+
+# =============================================================================
+# Typesense
+# =============================================================================
+
+typesense_api_key: "your-typesense-api-key"
+typesense_enable_cors: true
+typesense_log_level: DEBUG
+typesense_memory_limit: 10g
+typesense_max_memory_ratio: "0.5"
+typesense_num_memory_shards: 2
+typesense_snapshot_interval: 1800
+typesense_cache_purge_strategy: background
+typesense_extra_command_args: []
+
+# =============================================================================
+# Portainer
+# =============================================================================
+
+portainer_vhost: ""
+portainer_extra_env: {}
+
+# =============================================================================
+# SuperTokens
+# =============================================================================
+
+supertokens_db_name: supertokens
+supertokens_api_keys: "your-api-key"
+supertokens_postgres_host: postgres
+supertokens_postgres_port: 5432
+
+# =============================================================================
+# SQLPad
+# =============================================================================
+
+sqlpad_admin_email: ""
+sqlpad_admin_password: ""
+sqlpad_app_log_level: info
+sqlpad_web_log_level: warn
+sqlpad_connections: {}
+sqlpad_extra_env: {}
+
+# =============================================================================
+# Backrest
+# =============================================================================
+
+backrest_config_path: ""
+backrest_azure_account_name: ""
+backrest_azure_account_key: ""
+backrest_extra_volumes: []
+backrest_extra_env: {}

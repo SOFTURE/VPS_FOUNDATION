@@ -5,6 +5,15 @@
   gather_facts: true
 
   pre_tasks:
+    - name: Wait for system to be ready
+      ansible.builtin.wait_for_connection:
+        timeout: 300
+      tags: always
+
+    - name: Gather facts
+      ansible.builtin.setup:
+      tags: always
+
     - name: Validate required variables
       ansible.builtin.assert:
         that:
@@ -12,19 +21,29 @@
           - vps_app_user | length > 0
         fail_msg: "vps_app_user must be defined"
         success_msg: "Required variables validated"
+      tags: always
 
-    - name: Display bootstrap information
+    - name: Check if this is Ubuntu 22.04+
+      ansible.builtin.fail:
+        msg: "This playbook requires Ubuntu 22.04 or later"
+      when: ansible_facts['distribution'] != "Ubuntu" or ansible_facts['distribution_version'] is version('22.04', '<')
+      tags: always
+
+    - name: Display target system information
       ansible.builtin.debug:
         msg:
-          - "Bootstrapping VPS Server"
+          - "Bootstrapping VPS Server: {{ ansible_facts['hostname'] }}"
+          - "OS: {{ ansible_facts['distribution'] }} {{ ansible_facts['distribution_version'] }}"
+          - "Architecture: {{ ansible_facts['architecture'] }}"
           - "App User: {{ vps_app_user }}"
           - "Timezone: {{ vps_timezone | default('UTC') }}"
+      tags: always
 
   roles:
-    - role: jarmatys.vps_foundation.system_hardening
+    - role: softure.vps_foundation.system_hardening
       tags: [system, hardening]
 
-    - role: jarmatys.vps_foundation.docker_engine
+    - role: softure.vps_foundation.docker_engine
       tags: [docker]
 
   post_tasks:
@@ -35,4 +54,7 @@
           - "User '{{ vps_app_user }}' created with Docker access"
           - "SSH hardened, firewall enabled, fail2ban configured"
           - ""
-          - "IMPORTANT: From now on, login using '{{ vps_app_user }}' instead of 'ubuntu' or 'root'"
+          - "Next steps:"
+          - "1. Run vps-deploy-infrastructure for services"
+          - "2. Run your application deployment playbook"
+      tags: always

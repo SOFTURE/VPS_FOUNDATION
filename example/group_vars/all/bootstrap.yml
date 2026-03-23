@@ -1,0 +1,21 @@
+---
+# =============================================================================
+# VPS Connection
+# =============================================================================
+
+vps_host: 123.456.789.0
+vps_user: ubuntu
+vps_ssh_private_key_file: ~/.ssh/id_rsa
+vps_port: 22
+
+# =============================================================================
+# VPS Bootstrap Configuration
+# =============================================================================
+
+vps_app_user: user
+vps_app_group: user
+vps_timezone: "Europe/Warsaw"
+vps_locale: "en_US.UTF-8"
+
+vps_app_user_ssh_public_key_local: ""
+vps_app_user_ssh_public_key_github_actions: ""

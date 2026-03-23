@@ -1,0 +1,33 @@
+# =============================================================================
+# Caddyfile - Reverse Proxy Configuration
+# =============================================================================
+# Replace example.com with your domain.
+# Caddy automatically provisions HTTPS certificates via Let's Encrypt.
+#
+# After editing, the Caddy container will auto-reload the config.
+# =============================================================================
+
+# PostgreSQL Admin UI
+pgadmin.example.com {
+	reverse_proxy pgadmin:80
+}
+
+# RabbitMQ Management UI
+rabbitmq.example.com {
+	reverse_proxy rabbitmq:15672
+}
+
+# Seq Logging Dashboard
+seq.example.com {
+	reverse_proxy seq:80
+}
+
+# Portainer Docker Management
+portainer.example.com {
+	reverse_proxy portainer:9000
+}
+
+# Your application
+# app.example.com {
+# 	reverse_proxy your-app-container:8080
+# }

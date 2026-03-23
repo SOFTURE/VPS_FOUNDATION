@@ -6,25 +6,15 @@
   tags: always
 
   tasks:
-    - name: Check if host key already exists in known_hosts
-      ansible.builtin.command:
-        cmd: "ssh-keygen -F [{{ ansible_host }}]:{{ ansible_port | default(22) }}"
-      delegate_to: localhost
-      register: known_hosts_check
-      changed_when: false
-      failed_when: false
-      throttle: 1
-
     - name: Scan host key
       ansible.builtin.command:
         cmd: "ssh-keyscan -p {{ ansible_port | default(22) }} {{ ansible_host }}"
       delegate_to: localhost
       register: host_key_scan
       changed_when: false
-      when: known_hosts_check.rc != 0
       throttle: 1
 
-    - name: Add host key to known_hosts
+    - name: Ensure host key is up to date in known_hosts
       ansible.builtin.known_hosts:
         name: "{{ ansible_host }}"
         key: "{{ item }}"
@@ -32,7 +22,7 @@
         state: present
       delegate_to: localhost
       loop: "{{ host_key_scan.stdout_lines | default([]) }}"
-      when: known_hosts_check.rc != 0 and host_key_scan.stdout_lines | default([]) | length > 0
+      when: host_key_scan.stdout_lines | default([]) | length > 0
       throttle: 1
 
 - name: Bootstrap VPS Server

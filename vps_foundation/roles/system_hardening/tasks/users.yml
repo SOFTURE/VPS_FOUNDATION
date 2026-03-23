@@ -54,9 +54,10 @@
     prompt: |
 
       ================================================================================
-      GITHUB ACTIONS - SSH PUBLIC KEY REQUIRED
+      GITHUB ACTIONS - SSH PUBLIC KEY (OPTIONAL)
       ================================================================================
-      Please paste your GITHUB ACTIONS SSH PUBLIC key (starts with 'ssh-rsa', 'ssh-ed25519', etc.):
+      Please paste your GITHUB ACTIONS SSH PUBLIC key (starts with 'ssh-rsa', 'ssh-ed25519', etc.)
+      Press ENTER to skip:
   register: ssh_key_prompt_github_actions
   when:
     - vps_prompt_for_ssh_key | bool
@@ -72,12 +73,10 @@
     - ssh_key_prompt_github_actions.user_input | trim | length > 0
   tags: users
 
-- name: Validate both SSH keys are provided
+- name: Validate Local Machine SSH key is provided
   ansible.builtin.fail:
-    msg: |
-      Both SSH public keys are required!
-      Missing: {{ 'Local Machine key' if vps_app_user_ssh_public_key_local | length == 0 else '' }}{{ ' and ' if vps_app_user_ssh_public_key_local | length == 0 and vps_app_user_ssh_public_key_github_actions | length == 0 else '' }}{{ 'GitHub Actions key' if vps_app_user_ssh_public_key_github_actions | length == 0 else '' }}
-  when: vps_app_user_ssh_public_key_local | length == 0 or vps_app_user_ssh_public_key_github_actions | length == 0
+    msg: "Local Machine SSH public key is required!"
+  when: vps_app_user_ssh_public_key_local | length == 0
   tags: users
 
 - name: Write Local Machine SSH public key (exclusive - overwrites authorized_keys)
@@ -96,6 +95,7 @@
     comment: "github-actions"
     state: present
     exclusive: false
+  when: vps_app_user_ssh_public_key_github_actions | length > 0
   tags: users
 
 - name: Ensure correct permissions on authorized_keys
@@ -106,12 +106,17 @@
     mode: '0600'
   tags: users
 
-- name: Verify both SSH keys were written correctly
+- name: Count expected SSH keys
+  ansible.builtin.set_fact:
+    expected_ssh_key_count: "{{ 2 if vps_app_user_ssh_public_key_github_actions | length > 0 else 1 }}"
+  tags: users
+
+- name: Verify SSH keys were written correctly
   ansible.builtin.command:
     cmd: "grep -c 'ssh-' {{ vps_app_user_home }}/.ssh/authorized_keys"
   register: ssh_key_check
   changed_when: false
-  failed_when: ssh_key_check.rc != 0 or ssh_key_check.stdout | int < 2
+  failed_when: ssh_key_check.rc != 0 or ssh_key_check.stdout | int < expected_ssh_key_count | int
   tags: users
 
 - name: Set up passwordless sudo for application user

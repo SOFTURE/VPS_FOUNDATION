@@ -14,15 +14,15 @@
       changed_when: false
       throttle: 1
 
-    - name: Ensure host key is up to date in known_hosts
+    - name: Add host key to known_hosts
       ansible.builtin.known_hosts:
-        name: "{{ ansible_host }}"
+        name: "[{{ ansible_host }}]:{{ ansible_port | default(22) }}"
         key: "{{ item }}"
         path: "~/.ssh/known_hosts"
         state: present
       delegate_to: localhost
-      loop: "{{ host_key_scan.stdout_lines | default([]) }}"
-      when: host_key_scan.stdout_lines | default([]) | length > 0
+      loop: "{{ host_key_scan.stdout_lines | default([]) | reject('match', '^#') | list }}"
+      when: host_key_scan.stdout_lines | default([]) | reject('match', '^#') | list | length > 0
       throttle: 1
 
 - name: Bootstrap VPS Server

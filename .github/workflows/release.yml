@@ -19,9 +19,9 @@ jobs:
       - name: Get latest tag
         id: latest_tag
         run: |
-          tag=$(git tag -l 'v*' --sort=-v:refname | head -n1)
+          tag=$(git tag -l '[0-9]*' --sort=-v:refname | head -n1)
           if [ -z "$tag" ]; then
-            tag="v1.0.0"
+            tag="1.0.0"
           fi
           echo "tag=$tag" >> $GITHUB_OUTPUT
 
@@ -29,12 +29,10 @@ jobs:
         id: version
         run: |
           current="${{ steps.latest_tag.outputs.tag }}"
-          current="${current#v}"
           IFS='.' read -r major minor patch <<< "$current"
           minor=$((minor + 1))
           new_version="${major}.${minor}.0"
           echo "version=$new_version" >> $GITHUB_OUTPUT
-          echo "tag=v$new_version" >> $GITHUB_OUTPUT
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -57,14 +55,14 @@ jobs:
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          git tag ${{ steps.version.outputs.tag }}
-          git push origin ${{ steps.version.outputs.tag }}
+          git tag ${{ steps.version.outputs.version }}
+          git push origin ${{ steps.version.outputs.version }}
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ steps.version.outputs.tag }}
-          name: ${{ steps.version.outputs.tag }}
+          tag_name: ${{ steps.version.outputs.version }}
+          name: ${{ steps.version.outputs.version }}
           files: "vps_foundation/*.tar.gz"
           generate_release_notes: true
         env:

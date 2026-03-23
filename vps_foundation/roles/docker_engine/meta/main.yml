@@ -16,5 +16,4 @@ galaxy_info:
     - ubuntu
     - vps
 
-dependencies:
-  - role: softure.vps_foundation.system_hardening
+dependencies: []

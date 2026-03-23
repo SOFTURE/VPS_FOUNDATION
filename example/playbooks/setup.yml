@@ -14,11 +14,6 @@
 
 - name: "Phase 1: Bootstrap VPS"
   ansible.builtin.import_playbook: softure.vps_foundation.vps_bootstrap
-  vars:
-    vps_app_user: "{{ vps_app_user }}"
-    vps_app_group: "{{ vps_app_group }}"
-    vps_timezone: "{{ vps_timezone }}"
-    vps_locale: "{{ vps_locale }}"
   tags: [bootstrap]
 
 - name: "Phase 2: Deploy Infrastructure"

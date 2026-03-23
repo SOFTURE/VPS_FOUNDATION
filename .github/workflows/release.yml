@@ -7,6 +7,7 @@ on:
 
 jobs:
   release:
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -46,6 +47,14 @@ jobs:
         run: |
           sed -i "s/^version:.*/version: ${{ steps.version.outputs.version }}/" vps_foundation/galaxy.yml
 
+      - name: Commit version bump
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add vps_foundation/galaxy.yml
+          git commit -m "bump version to ${{ steps.version.outputs.version }} [skip ci]"
+          git push origin master
+
       - name: Build collection
         run: |
           cd vps_foundation
@@ -53,8 +62,6 @@ jobs:
 
       - name: Create tag
         run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
           git tag ${{ steps.version.outputs.version }}
           git push origin ${{ steps.version.outputs.version }}
 

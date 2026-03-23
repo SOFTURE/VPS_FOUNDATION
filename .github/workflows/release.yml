@@ -2,8 +2,8 @@ name: Release Collection
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - master
 
 jobs:
   release:
@@ -13,10 +13,28 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Get version from tag
+      - name: Get latest tag
+        id: latest_tag
+        run: |
+          tag=$(git tag -l 'v*' --sort=-v:refname | head -n1)
+          if [ -z "$tag" ]; then
+            tag="v1.0.0"
+          fi
+          echo "tag=$tag" >> $GITHUB_OUTPUT
+
+      - name: Bump minor version
         id: version
-        run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+        run: |
+          current="${{ steps.latest_tag.outputs.tag }}"
+          current="${current#v}"
+          IFS='.' read -r major minor patch <<< "$current"
+          minor=$((minor + 1))
+          new_version="${major}.${minor}.0"
+          echo "version=$new_version" >> $GITHUB_OUTPUT
+          echo "tag=v$new_version" >> $GITHUB_OUTPUT
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -35,9 +53,18 @@ jobs:
           cd vps_foundation
           ansible-galaxy collection build
 
+      - name: Create tag
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git tag ${{ steps.version.outputs.tag }}
+          git push origin ${{ steps.version.outputs.tag }}
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: ${{ steps.version.outputs.tag }}
           files: "vps_foundation/*.tar.gz"
           generate_release_notes: true
         env:

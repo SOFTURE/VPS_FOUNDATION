@@ -49,6 +49,18 @@
     - ssh_key_prompt_local.user_input | trim | length > 0
   tags: users
 
+- name: Validate Local Machine SSH key format
+  ansible.builtin.assert:
+    that:
+      - vps_app_user_ssh_public_key_local is regex('^(ssh-rsa|ssh-ed25519|ecdsa-sha2-nistp[0-9]+) [A-Za-z0-9+/=]+ ?.*$')
+    fail_msg: |
+      SSH key appears invalid or truncated!
+      Key starts with: {{ vps_app_user_ssh_public_key_local[:50] }}...
+      Key ends with: ...{{ vps_app_user_ssh_public_key_local[-50:] }}
+      Make sure you pasted the COMPLETE key from your .pub file.
+  when: vps_app_user_ssh_public_key_local | length > 0
+  tags: users
+
 - name: Prompt for GitHub Actions SSH public key if not provided
   ansible.builtin.pause:
     prompt: |
@@ -71,6 +83,16 @@
     - ssh_key_prompt_github_actions is defined
     - ssh_key_prompt_github_actions.user_input is defined
     - ssh_key_prompt_github_actions.user_input | trim | length > 0
+  tags: users
+
+- name: Validate GitHub Actions SSH key format
+  ansible.builtin.assert:
+    that:
+      - vps_app_user_ssh_public_key_github_actions is regex('^(ssh-rsa|ssh-ed25519|ecdsa-sha2-nistp[0-9]+) [A-Za-z0-9+/=]+ ?.*$')
+    fail_msg: |
+      GitHub Actions SSH key appears invalid or truncated!
+      Make sure you pasted the COMPLETE key from your .pub file.
+  when: vps_app_user_ssh_public_key_github_actions | length > 0
   tags: users
 
 - name: Validate Local Machine SSH key is provided

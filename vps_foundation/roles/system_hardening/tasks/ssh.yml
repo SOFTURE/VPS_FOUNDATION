@@ -47,6 +47,12 @@
   notify: restart ssh
   tags: ssh
 
+- name: Check if cloud-init SSH config exists
+  ansible.builtin.stat:
+    path: /etc/ssh/sshd_config.d/50-cloud-init.conf
+  register: cloud_init_ssh_config
+  tags: ssh
+
 - name: Disable password auth in cloud-init ssh config
   ansible.builtin.lineinfile:
     path: /etc/ssh/sshd_config.d/50-cloud-init.conf
@@ -56,7 +62,7 @@
     backup: true
   notify: restart ssh
   tags: ssh
-  ignore_errors: true
+  when: cloud_init_ssh_config.stat.exists
 
 - name: Configure SSH security settings
   ansible.builtin.template:

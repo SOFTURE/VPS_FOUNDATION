@@ -73,7 +73,7 @@ collections:
 # playbooks/setup.yml
 ---
 - name: "Phase 1: Bootstrap VPS"
-  ansible.builtin.import_playbook: softure.vps_foundation.vps-bootstrap
+  ansible.builtin.import_playbook: softure.vps_foundation.vps_bootstrap
   vars:
     vps_app_user: deploy
     vps_app_group: deploy
@@ -81,7 +81,7 @@ collections:
   tags: [bootstrap]
 
 - name: "Phase 2: Deploy Infrastructure"
-  ansible.builtin.import_playbook: softure.vps_foundation.vps-deploy-infrastructure
+  ansible.builtin.import_playbook: softure.vps_foundation.vps_deploy_infrastructure
   vars:
     services_network: app-network
     services_postgres_enabled: true

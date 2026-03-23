@@ -7,7 +7,7 @@ on:
 
 jobs:
   release:
-    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    if: "!contains(github.event.head_commit.message, '[SKIP CI]')"
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -52,7 +52,7 @@ jobs:
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
           git add vps_foundation/galaxy.yml
-          git commit -m "bump version to ${{ steps.version.outputs.version }} [skip ci]"
+          git commit -m "[SKIP CI] bump version to ${{ steps.version.outputs.version }}"
           git push origin master
 
       - name: Build collection

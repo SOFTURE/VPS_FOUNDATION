@@ -20,8 +20,8 @@ vps_foundation/
 ├── galaxy.yml                    # Collection metadata (namespace: softure)
 ├── meta/runtime.yml              # Ansible >=2.14 requirement
 ├── playbooks/
-│   ├── vps-bootstrap.yml         # System setup (hardening + Docker)
-│   └── vps-deploy-infrastructure.yml  # Service deployment
+│   ├── vps_bootstrap.yml         # System setup (hardening + Docker)
+│   └── vps_deploy_infrastructure.yml  # Service deployment
 └── roles/
     ├── system_hardening/         # SSH, UFW, fail2ban, users
     ├── docker_engine/            # Docker + Compose installation
@@ -163,12 +163,12 @@ System requirements:
 ansible-galaxy collection install . --force
 
 # Run bootstrap playbook
-ansible-playbook softure.vps_foundation.vps-bootstrap \
+ansible-playbook softure.vps_foundation.vps_bootstrap \
   -i inventory.yml \
   -e "vps_app_user=deploy vps_timezone=Europe/Warsaw"
 
 # Deploy specific service
-ansible-playbook softure.vps_foundation.vps-deploy-infrastructure \
+ansible-playbook softure.vps_foundation.vps_deploy_infrastructure \
   -i inventory.yml \
   -e "services_postgres_enabled=true" \
   --tags postgres

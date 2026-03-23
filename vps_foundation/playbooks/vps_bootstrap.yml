@@ -1,4 +1,20 @@
 ---
+- name: Ensure host keys are in known_hosts
+  hosts: all
+  gather_facts: false
+  become: false
+  tags: always
+
+  tasks:
+    - name: Scan and add host key if missing
+      ansible.builtin.known_hosts:
+        name: "{{ ansible_host }}"
+        key: "{{ lookup('pipe', 'ssh-keyscan -p ' ~ (ansible_port | default(22) | string) ~ ' ' ~ ansible_host ~ ' 2>/dev/null') }}"
+        path: "~/.ssh/known_hosts"
+        state: present
+      delegate_to: localhost
+      throttle: 1
+
 - name: Bootstrap VPS Server
   hosts: all
   become: true

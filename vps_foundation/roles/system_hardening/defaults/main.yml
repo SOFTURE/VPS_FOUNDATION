@@ -9,7 +9,7 @@ vps_prompt_for_ssh_key: true
 vps_timezone: "UTC"
 vps_locale: "en_US.UTF-8"
 
-vps_ssh_port: 22
+vps_ssh_port: "{{ ansible_port | default(22) }}"
 vps_ssh_permit_root_login: false
 vps_ssh_password_authentication: false
 vps_ssh_pubkey_authentication: true

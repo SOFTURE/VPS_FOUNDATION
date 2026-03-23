@@ -26,26 +26,52 @@
     mode: '0700'
   tags: users
 
-- name: Check if authorized_keys already exists on remote
+- name: Check if authorized_keys exists for app user
   ansible.builtin.stat:
     path: "{{ vps_app_user_home }}/.ssh/authorized_keys"
-  register: existing_authorized_keys
+  register: app_user_authorized_keys
   tags: users
 
-- name: Read existing authorized_keys content
+- name: Check if authorized_keys exists for root user
+  ansible.builtin.stat:
+    path: /root/.ssh/authorized_keys
+  register: root_authorized_keys
+  tags: users
+
+- name: Read app user authorized_keys content
   ansible.builtin.slurp:
     src: "{{ vps_app_user_home }}/.ssh/authorized_keys"
-  register: existing_authorized_keys_content
-  when: existing_authorized_keys.stat.exists
+  register: app_user_authorized_keys_content
+  when: app_user_authorized_keys.stat.exists
   tags: users
 
-- name: Detect existing SSH keys on remote
-  ansible.builtin.set_fact:
-    existing_ssh_keys: "{{ (existing_authorized_keys_content.content | b64decode).strip() }}"
+- name: Read root authorized_keys content
+  ansible.builtin.slurp:
+    src: /root/.ssh/authorized_keys
+  register: root_authorized_keys_content
   when:
-    - existing_authorized_keys.stat.exists
-    - existing_authorized_keys_content is defined
-    - existing_authorized_keys_content.content is defined
+    - root_authorized_keys.stat.exists
+    - not app_user_authorized_keys.stat.exists or (app_user_authorized_keys_content.content | default('') | b64decode | trim | length == 0)
+  tags: users
+
+- name: Set existing SSH keys from app user
+  ansible.builtin.set_fact:
+    existing_ssh_keys: "{{ (app_user_authorized_keys_content.content | b64decode).strip() }}"
+  when:
+    - app_user_authorized_keys.stat.exists
+    - app_user_authorized_keys_content.content is defined
+    - (app_user_authorized_keys_content.content | b64decode).strip() | length > 0
+  tags: users
+
+- name: Set existing SSH keys from root (fallback)
+  ansible.builtin.set_fact:
+    existing_ssh_keys: "{{ (root_authorized_keys_content.content | b64decode).strip() }}"
+  when:
+    - existing_ssh_keys is not defined
+    - root_authorized_keys_content is defined
+    - root_authorized_keys_content is not skipped
+    - root_authorized_keys_content.content is defined
+    - (root_authorized_keys_content.content | b64decode).strip() | length > 0
   tags: users
 
 - name: Detect Termius-generated SSH key on remote

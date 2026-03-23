@@ -54,12 +54,12 @@
     prompt: |
 
       ================================================================================
-      GITHUB ACTIONS - SSH PUBLIC KEY (OPTIONAL)
+      GITHUB ACTIONS - SSH PUBLIC KEY REQUIRED
       ================================================================================
-      Please paste your GITHUB ACTIONS SSH PUBLIC key (starts with 'ssh-rsa', 'ssh-ed25519', etc.)
-      Press ENTER to skip:
+      Please paste your GITHUB ACTIONS SSH PUBLIC key (starts with 'ssh-rsa', 'ssh-ed25519', etc.):
   register: ssh_key_prompt_github_actions
   when:
+    - vps_github_actions_ssh_required | bool
     - vps_prompt_for_ssh_key | bool
     - vps_app_user_ssh_public_key_github_actions | length == 0
   tags: users

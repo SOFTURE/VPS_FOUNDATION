@@ -5,6 +5,7 @@ vps_app_user_home: "/home/{{ vps_app_user }}"
 vps_app_user_ssh_public_key_local: ""
 vps_app_user_ssh_public_key_github_actions: ""
 vps_prompt_for_ssh_key: true
+vps_github_actions_ssh_required: true
 
 vps_timezone: "UTC"
 vps_locale: "en_US.UTF-8"

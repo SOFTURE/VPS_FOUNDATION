@@ -44,6 +44,8 @@ collections:
     vps_app_user: myproject
     vps_app_group: myproject
     vps_timezone: "Europe/Warsaw"
+    vps_locale: "en_US.UTF-8"
+    vps_github_actions_ssh_required: true  # prompts for GitHub Actions SSH key
 ```
 
 ### VPS Deploy Infrastructure

@@ -17,4 +17,4 @@ galaxy_info:
     - vps
 
 dependencies:
-  - role: jarmatys.vps_foundation.system_hardening
+  - role: softure.vps_foundation.system_hardening

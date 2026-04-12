@@ -1,0 +1,18 @@
+---
+galaxy_info:
+  role_name: cronicle
+  author: Jarmatys
+  description: Cronicle task scheduler container deployment
+  license: MIT
+  min_ansible_version: "2.14"
+  platforms:
+    - name: Ubuntu
+      versions:
+        - jammy
+        - noble
+  galaxy_tags:
+    - cronicle
+    - scheduler
+    - docker
+
+dependencies: []

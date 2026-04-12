@@ -5,7 +5,7 @@ readme: README.md
 authors:
   - Jarmatys
 
-description: Foundation roles for VPS setup - system hardening, Docker, and common services (PostgreSQL, RabbitMQ, Caddy, Seq, Portainer)
+description: Foundation roles for VPS setup - system hardening, Docker, and common services (PostgreSQL, RabbitMQ, Caddy, Seq, Portainer, Cronicle)
 
 license:
   - MIT
@@ -19,6 +19,7 @@ tags:
   - postgres
   - rabbitmq
   - caddy
+  - cronicle
 
 dependencies:
   community.docker: ">=3.0.0"

@@ -14,6 +14,7 @@
     services_portainer_enabled: false
     services_supertokens_enabled: false
     services_pgadmin_enabled: false
+    services_cronicle_enabled: false
     services_network: app-network
 
   pre_tasks:
@@ -38,6 +39,7 @@
           - "Portainer: {{ services_portainer_enabled }}"
           - "SuperTokens: {{ services_supertokens_enabled }}"
           - "PgAdmin: {{ services_pgadmin_enabled }}"
+          - "Cronicle: {{ services_cronicle_enabled }}"
 
   roles:
     - role: softure.vps_foundation.postgres
@@ -96,6 +98,13 @@
         supertokens_network: "{{ services_network }}"
       when: services_supertokens_enabled
       tags: [supertokens, auth]
+
+    - role: softure.vps_foundation.cronicle
+      vars:
+        cronicle_enabled: "{{ services_cronicle_enabled }}"
+        cronicle_network: "{{ services_network }}"
+      when: services_cronicle_enabled
+      tags: [cronicle, scheduler]
 
   post_tasks:
     - name: Services deployment completed

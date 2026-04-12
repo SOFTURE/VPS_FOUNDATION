@@ -1,0 +1,21 @@
+---
+cronicle_enabled: false
+cronicle_container_name: cronicle
+cronicle_image: elestio/cronicle:latest
+cronicle_restart_policy: always
+
+cronicle_network: app-network
+
+cronicle_secret_key: ""
+
+cronicle_data_dir: /opt/services/cronicle/data
+cronicle_logs_dir: /opt/services/cronicle/logs
+cronicle_plugins_dir: /opt/services/cronicle/plugins
+
+cronicle_mount_docker_socket: true
+
+cronicle_extra_env: {}
+
+cronicle_memory_limit: ""
+cronicle_memory_reservation: ""
+cronicle_cpus: ""

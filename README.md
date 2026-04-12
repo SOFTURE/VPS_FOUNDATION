@@ -33,6 +33,7 @@ collections:
 | `supertokens` | SuperTokens authentication server |
 | `sqlpad` | SQL query tool with web UI |
 | `backrest` | Backrest backup manager |
+| `cronicle` | Cronicle task scheduler with web UI |
 
 ## Playbooks
 
@@ -67,6 +68,8 @@ collections:
     services_typesense_enabled: true
     services_portainer_enabled: false
     services_supertokens_enabled: true
+    services_cronicle_enabled: true
+    cronicle_secret_key: "{{ lookup('env', 'CRONICLE_SECRET_KEY') }}"
 ```
 
 ## Quick Start

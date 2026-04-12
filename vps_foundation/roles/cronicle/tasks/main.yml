@@ -1,0 +1,53 @@
+---
+- name: Validate required variables
+  ansible.builtin.assert:
+    that:
+      - cronicle_secret_key is defined
+      - cronicle_secret_key | length >= 16
+    fail_msg: "Required variable: cronicle_secret_key (min 16 characters)"
+  when: cronicle_enabled | bool
+
+- name: Create Cronicle data directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - "{{ cronicle_data_dir }}"
+    - "{{ cronicle_logs_dir }}"
+    - "{{ cronicle_plugins_dir }}"
+  when: cronicle_enabled | bool
+  tags: cronicle
+
+- name: Build Cronicle volumes
+  ansible.builtin.set_fact:
+    cronicle_volumes: >-
+      {{
+        (['/var/run/docker.sock:/var/run/docker.sock'] if cronicle_mount_docker_socket else [])
+        + [
+            cronicle_data_dir ~ ':/opt/cronicle/data',
+            cronicle_logs_dir ~ ':/opt/cronicle/logs',
+            cronicle_plugins_dir ~ ':/opt/cronicle/plugins'
+          ]
+      }}
+  when: cronicle_enabled | bool
+  tags: cronicle
+
+- name: Start Cronicle container
+  community.docker.docker_container:
+    name: "{{ cronicle_container_name }}"
+    image: "{{ cronicle_image }}"
+    hostname: "{{ cronicle_container_name }}"
+    entrypoint: manager
+    state: started
+    recreate: true
+    restart_policy: "{{ cronicle_restart_policy }}"
+    env: "{{ {'CRONICLE_manager': '1', 'CRONICLE_secret_key': cronicle_secret_key} | combine(cronicle_extra_env) }}"
+    volumes: "{{ cronicle_volumes }}"
+    networks:
+      - name: "{{ cronicle_network }}"
+    memory: "{{ cronicle_memory_limit | default(omit, true) }}"
+    memory_reservation: "{{ cronicle_memory_reservation | default(omit, true) }}"
+    cpus: "{{ cronicle_cpus | default(omit, true) }}"
+  when: cronicle_enabled | bool
+  tags: cronicle

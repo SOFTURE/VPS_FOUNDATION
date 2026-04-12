@@ -102,3 +102,11 @@ backrest_azure_account_name: ""
 backrest_azure_account_key: ""
 backrest_extra_volumes: []
 backrest_extra_env: {}
+
+# =============================================================================
+# Cronicle
+# =============================================================================
+
+cronicle_secret_key: "CHANGE_ME_cronicle_secret_key_min_16_chars"
+cronicle_mount_docker_socket: true
+cronicle_extra_env: {}

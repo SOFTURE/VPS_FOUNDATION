@@ -16,7 +16,7 @@
 
     - name: Add host key to known_hosts
       ansible.builtin.known_hosts:
-        name: "[{{ ansible_host }}]:{{ ansible_port | default(22) }}"
+        name: "{{ item.split()[0] }}"
         key: "{{ item }}"
         path: "~/.ssh/known_hosts"
         state: present

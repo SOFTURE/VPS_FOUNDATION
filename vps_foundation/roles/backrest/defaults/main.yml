@@ -2,6 +2,7 @@
 backrest_enabled: false
 backrest_container_name: backrest
 backrest_image: ghcr.io/garethgeorge/backrest:latest
+backrest_image_override: ""
 backrest_restart_policy: always
 
 backrest_data_dir: /opt/services/backrest/data

@@ -39,7 +39,7 @@
 - name: Start SQLPad container
   community.docker.docker_container:
     name: "{{ sqlpad_container_name }}"
-    image: "{{ sqlpad_image }}"
+    image: "{{ sqlpad_image_override | default(sqlpad_image, true) }}"
     hostname: "{{ sqlpad_container_name }}"
     state: started
     recreate: true

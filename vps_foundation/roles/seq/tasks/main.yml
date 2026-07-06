@@ -2,7 +2,7 @@
 - name: Start Seq container
   community.docker.docker_container:
     name: "{{ seq_container_name }}"
-    image: "{{ seq_image }}"
+    image: "{{ seq_image_override | default(seq_image, true) }}"
     state: started
     recreate: true
     restart_policy: "{{ seq_restart_policy }}"

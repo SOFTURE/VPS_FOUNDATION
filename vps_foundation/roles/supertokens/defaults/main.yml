@@ -2,6 +2,7 @@
 supertokens_enabled: false
 supertokens_container_name: supertokens-core
 supertokens_image: registry.supertokens.io/supertokens/supertokens-postgresql:10.1
+supertokens_image_override: ""
 supertokens_restart_policy: always
 supertokens_network: app-network
 

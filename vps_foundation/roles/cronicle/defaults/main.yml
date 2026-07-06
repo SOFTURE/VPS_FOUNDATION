@@ -2,6 +2,7 @@
 cronicle_enabled: false
 cronicle_container_name: cronicle
 cronicle_image: elestio/cronicle:latest
+cronicle_image_override: ""
 cronicle_restart_policy: always
 
 cronicle_network: app-network

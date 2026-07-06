@@ -2,6 +2,7 @@
 seq_enabled: false
 seq_container_name: seq
 seq_image: datalust/seq:latest
+seq_image_override: ""
 seq_restart_policy: always
 
 seq_network: app-network

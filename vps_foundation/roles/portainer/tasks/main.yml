@@ -2,7 +2,7 @@
 - name: Start Portainer container
   community.docker.docker_container:
     name: "{{ portainer_container_name }}"
-    image: "{{ portainer_image }}"
+    image: "{{ portainer_image_override | default(portainer_image, true) }}"
     state: started
     recreate: true
     restart_policy: "{{ portainer_restart_policy }}"

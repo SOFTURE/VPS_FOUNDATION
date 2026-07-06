@@ -35,6 +35,33 @@ collections:
 | `backrest` | Backrest backup manager |
 | `cronicle` | Cronicle task scheduler with web UI |
 
+## Custom container images
+
+Every service uses a sensible default image (e.g. `postgres:16-alpine`). Each image can be overridden with an optional `<name>_image_override` variable. When set, it fully replaces the default image — provide the complete reference including registry and tag; when left empty (the default), the built-in image is used.
+
+| Variable | Overrides |
+|----------|-----------|
+| `postgres_image_override` | PostgreSQL image |
+| `pgadmin_image_override` | PgAdmin image |
+| `mssql_image_override` | MSSQL image |
+| `rabbitmq_image_override` | RabbitMQ image |
+| `caddy_image_override` | Caddy image (wins over both the default and Cloudflare variants) |
+| `seq_image_override` | Seq image |
+| `typesense_image_override` | Typesense image |
+| `portainer_image_override` | Portainer image |
+| `supertokens_image_override` | SuperTokens image |
+| `sqlpad_image_override` | SQLPad image |
+| `backrest_image_override` | Backrest image |
+| `cronicle_image_override` | Cronicle image |
+
+```yaml
+vars:
+  # Pull from a private registry, or pin/bump to a different tag
+  postgres_image_override: myregistry.io/library/postgres:17-alpine
+  # Just change the tag on the default image
+  typesense_image_override: typesense/typesense:0.26.0
+```
+
 ## Playbooks
 
 ### VPS Bootstrap

@@ -12,7 +12,7 @@
 - name: Start SuperTokens container
   community.docker.docker_container:
     name: "{{ supertokens_container_name }}"
-    image: "{{ supertokens_image }}"
+    image: "{{ supertokens_image_override | default(supertokens_image, true) }}"
     state: started
     recreate: true
     restart_policy: "{{ supertokens_restart_policy }}"

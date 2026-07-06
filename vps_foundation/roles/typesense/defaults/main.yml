@@ -2,6 +2,7 @@
 typesense_enabled: false
 typesense_container_name: typesense
 typesense_image: typesense/typesense:0.25.1
+typesense_image_override: ""
 typesense_restart_policy: always
 
 typesense_api_key: ""

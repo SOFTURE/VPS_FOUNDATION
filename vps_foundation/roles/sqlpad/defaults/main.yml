@@ -2,6 +2,7 @@
 sqlpad_enabled: false
 sqlpad_container_name: sqlpad
 sqlpad_image: sqlpad/sqlpad:5
+sqlpad_image_override: ""
 sqlpad_restart_policy: always
 
 sqlpad_admin_email: ""

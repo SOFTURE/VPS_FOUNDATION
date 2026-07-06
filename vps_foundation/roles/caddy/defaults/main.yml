@@ -3,6 +3,7 @@ caddy_enabled: false
 caddy_container_name: caddy
 caddy_image: caddy:2-alpine
 caddy_image_cloudflare: ghcr.io/caddybuilds/caddy-cloudflare:latest
+caddy_image_override: ""
 caddy_use_cloudflare: false
 caddy_restart_policy: always
 

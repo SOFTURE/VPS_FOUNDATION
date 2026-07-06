@@ -2,6 +2,7 @@
 postgres_enabled: false
 postgres_container_name: postgres
 postgres_image: postgres:16-alpine
+postgres_image_override: ""
 postgres_restart_policy: always
 
 postgres_db: "{{ postgres_db }}"
@@ -22,6 +23,7 @@ postgres_cpus: ""
 pgadmin_enabled: false
 pgadmin_container_name: pgadmin
 pgadmin_image: dpage/pgadmin4:latest
+pgadmin_image_override: ""
 pgadmin_email: "{{ pgadmin_email | default('admin@example.com') }}"
 pgadmin_password: "{{ pgadmin_password | default('admin') }}"
 pgadmin_memory_limit: ""

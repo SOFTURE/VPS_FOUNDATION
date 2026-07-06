@@ -36,7 +36,7 @@
 - name: Start Cronicle container
   community.docker.docker_container:
     name: "{{ cronicle_container_name }}"
-    image: "{{ cronicle_image }}"
+    image: "{{ cronicle_image_override | default(cronicle_image, true) }}"
     hostname: "{{ cronicle_container_name }}"
     entrypoint: manager
     state: started

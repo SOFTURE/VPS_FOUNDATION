@@ -2,6 +2,7 @@
 mssql_enabled: false
 mssql_container_name: mssql
 mssql_image: mcr.microsoft.com/mssql/server:2019-latest
+mssql_image_override: ""
 mssql_restart_policy: always
 
 mssql_sa_password: "{{ mssql_sa_password }}"

@@ -34,7 +34,7 @@
 - name: Start PostgreSQL container (with init script)
   community.docker.docker_container:
     name: "{{ postgres_container_name }}"
-    image: "{{ postgres_image }}"
+    image: "{{ postgres_image_override | default(postgres_image, true) }}"
     state: started
     recreate: true
     restart_policy: "{{ postgres_restart_policy }}"
@@ -61,7 +61,7 @@
 - name: Start PostgreSQL container (without init script)
   community.docker.docker_container:
     name: "{{ postgres_container_name }}"
-    image: "{{ postgres_image }}"
+    image: "{{ postgres_image_override | default(postgres_image, true) }}"
     state: started
     recreate: true
     restart_policy: "{{ postgres_restart_policy }}"
@@ -97,7 +97,7 @@
 - name: Start PgAdmin container
   community.docker.docker_container:
     name: "{{ pgadmin_container_name }}"
-    image: "{{ pgadmin_image }}"
+    image: "{{ pgadmin_image_override | default(pgadmin_image, true) }}"
     state: started
     recreate: true
     restart_policy: "{{ postgres_restart_policy }}"

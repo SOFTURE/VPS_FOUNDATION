@@ -53,7 +53,7 @@
 - name: Start Backrest container
   community.docker.docker_container:
     name: "{{ backrest_container_name }}"
-    image: "{{ backrest_image }}"
+    image: "{{ backrest_image_override | default(backrest_image, true) }}"
     hostname: "{{ backrest_container_name }}"
     state: started
     recreate: true

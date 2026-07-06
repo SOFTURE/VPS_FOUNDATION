@@ -26,7 +26,7 @@
 - name: Start RabbitMQ container (with config)
   community.docker.docker_container:
     name: "{{ rabbitmq_container_name }}"
-    image: "{{ rabbitmq_image }}"
+    image: "{{ rabbitmq_image_override | default(rabbitmq_image, true) }}"
     state: started
     recreate: true
     restart_policy: "{{ rabbitmq_restart_policy }}"
@@ -52,7 +52,7 @@
 - name: Start RabbitMQ container (without config)
   community.docker.docker_container:
     name: "{{ rabbitmq_container_name }}"
-    image: "{{ rabbitmq_image }}"
+    image: "{{ rabbitmq_image_override | default(rabbitmq_image, true) }}"
     state: started
     recreate: true
     restart_policy: "{{ rabbitmq_restart_policy }}"

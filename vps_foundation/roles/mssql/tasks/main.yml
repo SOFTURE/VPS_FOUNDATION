@@ -25,7 +25,7 @@
 - name: Start MSSQL container
   community.docker.docker_container:
     name: "{{ mssql_container_name }}"
-    image: "{{ mssql_image }}"
+    image: "{{ mssql_image_override | default(mssql_image, true) }}"
     hostname: "{{ mssql_container_name }}"
     state: started
     recreate: true

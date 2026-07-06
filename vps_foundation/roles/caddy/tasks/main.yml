@@ -11,7 +11,7 @@
 
 - name: Set Caddy image based on Cloudflare usage
   ansible.builtin.set_fact:
-    caddy_final_image: "{{ caddy_image_cloudflare if caddy_use_cloudflare else caddy_image }}"
+    caddy_final_image: "{{ caddy_image_override | default(caddy_image_cloudflare if caddy_use_cloudflare else caddy_image, true) }}"
   tags: caddy
 
 - name: Create Caddy config directory

@@ -2,6 +2,7 @@
 portainer_enabled: false
 portainer_container_name: portainer
 portainer_image: portainer/portainer-ce:latest
+portainer_image_override: ""
 portainer_restart_policy: always
 
 portainer_network: app-network

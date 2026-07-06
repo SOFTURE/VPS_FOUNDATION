@@ -37,7 +37,7 @@
 - name: Start Typesense container
   community.docker.docker_container:
     name: "{{ typesense_container_name }}"
-    image: "{{ typesense_image }}"
+    image: "{{ typesense_image_override | default(typesense_image, true) }}"
     hostname: "{{ typesense_container_name }}"
     state: started
     recreate: true

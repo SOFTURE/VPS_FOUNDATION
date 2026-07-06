@@ -2,6 +2,7 @@
 rabbitmq_enabled: false
 rabbitmq_container_name: rabbitmq
 rabbitmq_image: rabbitmq:3-management
+rabbitmq_image_override: ""
 rabbitmq_restart_policy: always
 
 rabbitmq_user: "{{ rabbitmq_user }}"

@@ -1,8 +1,6 @@
 ---
 usertour_enabled: false
 usertour_container_name: usertour
-# Pinned on purpose: scripts/start.sh runs `prisma migrate deploy` on every start,
-# so an unattended version bump means an uncontrolled database migration.
 usertour_image: usertour/usertour:0.8.7
 usertour_image_override: ""
 usertour_restart_policy: always
@@ -26,7 +24,6 @@ usertour_jwt_secret: ""
 usertour_jwt_expiration_time: 1h
 usertour_jwt_refresh_expiration_time: 7d
 
-# Public URL the instance is served on (Caddy terminates TLS in front of it).
 usertour_api_url: ""
 usertour_homepage_url: "{{ usertour_api_url }}"
 usertour_cookie_secure: true
@@ -34,8 +31,6 @@ usertour_cookie_domain: ""
 
 usertour_email_auth_enabled: true
 
-# S3-compatible storage for images used in tour steps. Left empty on purpose —
-# uploading an image in the builder fails until these are filled in.
 usertour_s3_region: ""
 usertour_s3_endpoint: ""
 usertour_s3_access_key_id: ""

@@ -68,7 +68,6 @@
   when: usertour_enabled
   tags: usertour
 
-# The image is built on node:22.13-alpine — it ships busybox wget, not curl.
 - name: Wait for UserTour to be ready
   ansible.builtin.command:
     cmd: "docker exec {{ usertour_container_name }} wget -q -O - http://localhost:80/api/health"
@@ -80,9 +79,6 @@
   when: usertour_enabled
   tags: usertour
 
-# setupSystemAdmin is a @Public() mutation guarded by a Redis lock and an
-# "is there already a system admin?" check. Re-running the playbook returns
-# SystemAdminAlreadyInitializedError, which is the desired state, not a failure.
 - name: Bootstrap system admin
   ansible.builtin.command:
     cmd: >-

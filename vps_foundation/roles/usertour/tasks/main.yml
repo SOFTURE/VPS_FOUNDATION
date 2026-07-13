@@ -70,7 +70,7 @@
 
 - name: Wait for UserTour to be ready
   ansible.builtin.command:
-    cmd: "docker exec {{ usertour_container_name }} wget -q -O - http://localhost:80/api/health"
+    cmd: "docker exec {{ usertour_container_name }} wget -q -O - http://127.0.0.1:80/api/health"
   register: usertour_health
   until: usertour_health.rc == 0
   retries: 60
@@ -85,7 +85,7 @@
       docker exec {{ usertour_container_name }}
       wget -q -O - --header=content-type:application/json
       --post-data={{ usertour_bootstrap_payload | to_json | quote }}
-      http://localhost:80/graphql
+      http://127.0.0.1:80/graphql
   register: usertour_bootstrap
   changed_when: >-
     usertour_bootstrap.rc == 0 and 'SystemAdminAlreadyInitialized' not in usertour_bootstrap.stdout

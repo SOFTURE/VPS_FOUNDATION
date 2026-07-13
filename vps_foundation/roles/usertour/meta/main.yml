@@ -1,0 +1,18 @@
+---
+galaxy_info:
+  role_name: usertour
+  author: Jarmatys
+  description: Self-hosted UserTour (product tours, checklists, tooltips) container deployment
+  license: MIT
+  min_ansible_version: "2.14"
+  platforms:
+    - name: Ubuntu
+      versions:
+        - jammy
+        - noble
+  galaxy_tags:
+    - usertour
+    - onboarding
+    - docker
+
+dependencies: []

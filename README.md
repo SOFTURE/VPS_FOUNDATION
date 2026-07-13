@@ -34,6 +34,8 @@ collections:
 | `sqlpad` | SQL query tool with web UI |
 | `backrest` | Backrest backup manager |
 | `cronicle` | Cronicle task scheduler with web UI |
+| `redis` | Redis container with password auth and AOF persistence |
+| `usertour` | Self-hosted UserTour (product tours, checklists, tooltips) |
 
 ## Custom container images
 
@@ -53,6 +55,8 @@ Every service uses a sensible default image (e.g. `postgres:16-alpine`). Each im
 | `sqlpad_image_override` | SQLPad image |
 | `backrest_image_override` | Backrest image |
 | `cronicle_image_override` | Cronicle image |
+| `redis_image_override` | Redis image |
+| `usertour_image_override` | UserTour image |
 
 ```yaml
 vars:

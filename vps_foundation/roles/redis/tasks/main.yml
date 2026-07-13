@@ -1,0 +1,61 @@
+---
+- name: Validate required variables
+  ansible.builtin.assert:
+    that:
+      - redis_password is defined
+      - redis_password | length >= 8
+    fail_msg: "Required variable: redis_password (min 8 characters)"
+  when: redis_enabled | bool
+
+- name: Create Redis data directory
+  ansible.builtin.file:
+    path: "{{ redis_data_dir }}"
+    state: directory
+    mode: '0755'
+  when: redis_enabled
+  tags: redis
+
+- name: Build network list
+  ansible.builtin.set_fact:
+    redis_networks: "{{ [{'name': redis_network}] + (redis_extra_networks | map('community.general.dict_kw', name='name') | list) }}"
+  when: redis_enabled
+  tags: redis
+
+- name: Build command arguments
+  ansible.builtin.set_fact:
+    redis_command: >-
+      redis-server
+      --requirepass {{ redis_password }}
+      --appendonly {{ 'yes' if redis_appendonly else 'no' }}
+      {{ redis_extra_command_args | join(' ') }}
+  when: redis_enabled
+  tags: redis
+
+- name: Start Redis container
+  community.docker.docker_container:
+    name: "{{ redis_container_name }}"
+    image: "{{ redis_image_override | default(redis_image, true) }}"
+    hostname: "{{ redis_container_name }}"
+    state: started
+    recreate: true
+    restart_policy: "{{ redis_restart_policy }}"
+    command: "{{ redis_command }}"
+    volumes:
+      - "{{ redis_data_dir }}:/data"
+    networks: "{{ redis_networks }}"
+    memory: "{{ redis_memory_limit | default(omit, true) }}"
+    memory_reservation: "{{ redis_memory_reservation | default(omit, true) }}"
+    cpus: "{{ redis_cpus | default(omit, true) }}"
+  when: redis_enabled
+  tags: redis
+
+- name: Wait for Redis to be ready
+  ansible.builtin.command:
+    cmd: "docker exec {{ redis_container_name }} redis-cli -a {{ redis_password }} --no-auth-warning ping"
+  register: redis_health
+  until: redis_health.rc == 0 and 'PONG' in redis_health.stdout
+  retries: 30
+  delay: 2
+  changed_when: false
+  when: redis_enabled
+  tags: redis

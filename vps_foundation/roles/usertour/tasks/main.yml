@@ -1,0 +1,108 @@
+---
+- name: Validate required variables
+  ansible.builtin.assert:
+    that:
+      - usertour_db_name is defined
+      - postgres_user is defined
+      - postgres_password is defined
+      - usertour_jwt_secret | length >= 16
+      - usertour_api_url | length > 0
+      - usertour_admin_email | length > 0
+      - usertour_admin_password | length >= 8
+    fail_msg: >-
+      Required variables: usertour_db_name, postgres_user, postgres_password,
+      usertour_jwt_secret (min 16 chars), usertour_api_url,
+      usertour_admin_email, usertour_admin_password (min 8 chars)
+  when: usertour_enabled | bool
+
+- name: Build network list
+  ansible.builtin.set_fact:
+    usertour_networks: "{{ [{'name': usertour_network}] + (usertour_extra_networks | map('community.general.dict_kw', name='name') | list) }}"
+  when: usertour_enabled
+  tags: usertour
+
+- name: Build database connection string
+  ansible.builtin.set_fact:
+    usertour_database_url: >-
+      postgresql://{{ postgres_user }}:{{ postgres_password }}@{{ usertour_db_host }}:{{ usertour_db_port }}/{{ usertour_db_name }}?schema={{ usertour_db_schema }}&sslmode=prefer
+  when: usertour_enabled
+  tags: usertour
+
+- name: Start UserTour container
+  community.docker.docker_container:
+    name: "{{ usertour_container_name }}"
+    image: "{{ usertour_image_override | default(usertour_image, true) }}"
+    hostname: "{{ usertour_container_name }}"
+    state: started
+    recreate: true
+    restart_policy: "{{ usertour_restart_policy }}"
+    env: "{{ usertour_env | combine(usertour_extra_env) }}"
+    networks: "{{ usertour_networks }}"
+    memory: "{{ usertour_memory_limit | default(omit, true) }}"
+    memory_reservation: "{{ usertour_memory_reservation | default(omit, true) }}"
+    cpus: "{{ usertour_cpus | default(omit, true) }}"
+  vars:
+    usertour_env:
+      NODE_ENV: production
+      DATABASE_URL: "{{ usertour_database_url }}"
+      DATABASE_DIRECT_URL: "{{ usertour_database_url }}"
+      Redis_HOST: "{{ usertour_redis_host }}"
+      Redis_PORT: "{{ usertour_redis_port | string }}"
+      Redis_PASS: "{{ usertour_redis_password }}"
+      Redis_USER: "{{ usertour_redis_user }}"
+      Redis_TLS: "{{ usertour_redis_tls | string | lower }}"
+      JWT_SECRET: "{{ usertour_jwt_secret }}"
+      JWT_EXPIRATION_TIME: "{{ usertour_jwt_expiration_time }}"
+      JWT_REFRESH_EXPIRATION_TIME: "{{ usertour_jwt_refresh_expiration_time }}"
+      API_URL: "{{ usertour_api_url }}"
+      APP_HOMEPAGE_URL: "{{ usertour_homepage_url }}"
+      USERTOUR_COOKIE_SECURE: "{{ usertour_cookie_secure | string | lower }}"
+      USERTOUR_COOKIE_DOMAIN: "{{ usertour_cookie_domain }}"
+      EMAIL_AUTH_ENABLED: "{{ usertour_email_auth_enabled | string | lower }}"
+      AWS_S3_REGION: "{{ usertour_s3_region }}"
+      AWS_S3_ENDPOINT: "{{ usertour_s3_endpoint }}"
+      AWS_S3_ACCESS_KEY_ID: "{{ usertour_s3_access_key_id }}"
+      AWS_S3_SECRET_ACCESS_KEY: "{{ usertour_s3_secret_access_key }}"
+      AWS_S3_BUCKET: "{{ usertour_s3_bucket }}"
+      AWS_S3_DOMAIN: "{{ usertour_s3_domain }}"
+  when: usertour_enabled
+  tags: usertour
+
+# The image is built on node:22.13-alpine — it ships busybox wget, not curl.
+- name: Wait for UserTour to be ready
+  ansible.builtin.command:
+    cmd: "docker exec {{ usertour_container_name }} wget -q -O - http://localhost:80/api/health"
+  register: usertour_health
+  until: usertour_health.rc == 0
+  retries: 60
+  delay: 5
+  changed_when: false
+  when: usertour_enabled
+  tags: usertour
+
+# setupSystemAdmin is a @Public() mutation guarded by a Redis lock and an
+# "is there already a system admin?" check. Re-running the playbook returns
+# SystemAdminAlreadyInitializedError, which is the desired state, not a failure.
+- name: Bootstrap system admin
+  ansible.builtin.command:
+    cmd: >-
+      docker exec {{ usertour_container_name }}
+      wget -q -O - --header=content-type:application/json
+      --post-data={{ usertour_bootstrap_payload | to_json | quote }}
+      http://localhost:80/graphql
+  register: usertour_bootstrap
+  changed_when: >-
+    usertour_bootstrap.rc == 0 and 'SystemAdminAlreadyInitialized' not in usertour_bootstrap.stdout
+  failed_when: >-
+    usertour_bootstrap.rc != 0 and 'SystemAdminAlreadyInitialized' not in usertour_bootstrap.stdout
+  vars:
+    usertour_bootstrap_payload:
+      query: "mutation($data: SetupSystemAdminInput!) { setupSystemAdmin(data: $data) { accessToken projectId } }"
+      variables:
+        data:
+          name: "{{ usertour_admin_name }}"
+          email: "{{ usertour_admin_email }}"
+          password: "{{ usertour_admin_password }}"
+  no_log: true
+  when: usertour_enabled
+  tags: usertour

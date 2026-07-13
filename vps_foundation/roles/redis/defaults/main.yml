@@ -1,0 +1,19 @@
+---
+redis_enabled: false
+redis_container_name: redis
+redis_image: redis:7-alpine
+redis_image_override: ""
+redis_restart_policy: always
+redis_network: app-network
+redis_extra_networks: []
+
+redis_password: ""
+
+redis_data_dir: /opt/services/redis/data
+redis_appendonly: true
+
+redis_extra_command_args: []
+
+redis_memory_limit: ""
+redis_memory_reservation: ""
+redis_cpus: ""

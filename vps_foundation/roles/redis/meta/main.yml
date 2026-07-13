@@ -1,0 +1,18 @@
+---
+galaxy_info:
+  role_name: redis
+  author: Jarmatys
+  description: Redis container deployment with password auth and AOF persistence
+  license: MIT
+  min_ansible_version: "2.14"
+  platforms:
+    - name: Ubuntu
+      versions:
+        - jammy
+        - noble
+  galaxy_tags:
+    - redis
+    - cache
+    - docker
+
+dependencies: []

@@ -146,6 +146,24 @@ ansible-playbook -i inventory/hosts.yml playbooks/setup.yml --tags infrastructur
 ansible-playbook -i inventory/hosts.yml playbooks/setup.yml --tags postgres
 ```
 
+## One-off bootstrap (no inventory files)
+
+To harden a fresh server and install Docker without creating an inventory — services deployed separately — use the wrapper script:
+
+```bash
+# Install the collection first
+ansible-galaxy collection install . --force
+
+./scripts/bootstrap.sh \
+  --host 203.0.113.10 \
+  --user deploy \
+  --pubkey ~/.ssh/id_ed25519.pub
+```
+
+The script verifies key-based SSH access before running, then passes everything through `--extra-vars` — nothing is written to disk. Options: `--ssh-user`, `--ssh-port`, `--timezone`, `--locale`, `--github-actions`, `--check`. Arguments after `--` are forwarded to `ansible-playbook`.
+
+The public key must already be authorized on the server (`ssh-copy-id` first) — Ansible cannot log in with a password without `sshpass`.
+
 See the [example/](example/) directory for a complete working setup including inventory, group vars, playbooks, and sample config files.
 
 ## Requirements

@@ -1,5 +1,14 @@
 # VPS Foundation - Ansible Collection
 
+## Language
+
+**All repository content is written in English** - code, comments, task names,
+variable descriptions, commit messages, documentation, and script output.
+
+This is a public Ansible Galaxy collection consumed outside this team, so
+English is the only language its audience is guaranteed to read. Conversation
+with the user may be in any language; what lands in the repository is English.
+
 ## CRITICAL - File Editing Rules
 
 **NEVER edit files in `~/.ansible/collections/` - these are installed Galaxy modules!**

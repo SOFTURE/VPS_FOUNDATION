@@ -1,0 +1,100 @@
+---
+- name: Validate deploy user variables
+  ansible.builtin.assert:
+    that:
+      - deploy_user_name is match('^[a-z_][a-z0-9_-]*$')
+      - deploy_user_apps is sequence
+      - deploy_user_apps | rejectattr('name', 'defined') | list | length == 0
+      - deploy_user_apps | map(attribute='name') | reject('match', '^[a-z][a-z0-9-]*$') | list | length == 0
+      - deploy_user_apps | map(attribute='name') | unique | list | length == deploy_user_apps | length
+      - deploy_user_apps | selectattr('key', 'defined') | map(attribute='key') | reject('match', deploy_user_key_pattern) | list | length == 0
+    fail_msg: >-
+      deploy_user_name must be a user name; every deploy_user_apps entry needs a unique name ([a-z][a-z0-9-]*) and,
+      when given, a single-line SSH public key.
+  when: deploy_user_enabled | bool
+  tags: [deploy_user]
+
+- name: Create deploy group
+  ansible.builtin.group:
+    name: "{{ deploy_user_group }}"
+    state: present
+  when: deploy_user_enabled | bool
+  tags: [deploy_user]
+
+- name: Create deploy user (no sudo)
+  ansible.builtin.user:
+    name: "{{ deploy_user_name }}"
+    group: "{{ deploy_user_group }}"
+    groups: "{{ deploy_user_groups }}"
+    append: true
+    shell: "{{ deploy_user_shell }}"
+    home: "{{ deploy_user_home }}"
+    create_home: true
+    password_lock: true
+    state: present
+  when: deploy_user_enabled | bool
+  tags: [deploy_user]
+
+- name: Refuse a deploy user with sudo rights
+  ansible.builtin.command:
+    cmd: "id -nG {{ deploy_user_name }}"
+  register: deploy_user_id_groups
+  changed_when: false
+  failed_when: >-
+    deploy_user_id_groups.rc != 0 or
+    'sudo' in deploy_user_id_groups.stdout.split() or 'admin' in deploy_user_id_groups.stdout.split()
+  when: deploy_user_enabled | bool and not ansible_check_mode
+  tags: [deploy_user]
+
+- name: Create .ssh directory of the deploy user
+  ansible.builtin.file:
+    path: "{{ deploy_user_home }}/.ssh"
+    state: directory
+    owner: "{{ deploy_user_name }}"
+    group: "{{ deploy_user_group }}"
+    mode: "0700"
+  when: deploy_user_enabled | bool
+  tags: [deploy_user]
+
+- name: Ensure authorized_keys of the deploy user exists
+  ansible.builtin.copy:
+    content: ""
+    dest: "{{ deploy_user_home }}/.ssh/authorized_keys"
+    force: false
+    owner: "{{ deploy_user_name }}"
+    group: "{{ deploy_user_group }}"
+    mode: "0600"
+  when: deploy_user_enabled | bool
+  tags: [deploy_user]
+
+- name: Write the release key line of each app
+  ansible.builtin.lineinfile:
+    path: "{{ deploy_user_home }}/.ssh/authorized_keys"
+    regexp: '\s{{ item.name | regex_escape }}-release$'
+    line: >-
+      command="{{ item.command | default(deploy_user_app_root ~ '/' ~ item.name ~ '/deploy.sh') }}",restrict
+      {{ (item.key | trim).split(' ')[0:2] | join(' ') }} {{ item.name }}-release
+    owner: "{{ deploy_user_name }}"
+    group: "{{ deploy_user_group }}"
+    mode: "0600"
+    state: present
+  loop: "{{ deploy_user_apps | selectattr('key', 'defined') | list }}"
+  loop_control:
+    label: "{{ item.name }}"
+  when:
+    - deploy_user_enabled | bool
+    - item.state | default('present') == 'present'
+  tags: [deploy_user]
+
+- name: Remove the release key line of apps marked absent
+  ansible.builtin.lineinfile:
+    path: "{{ deploy_user_home }}/.ssh/authorized_keys"
+    regexp: '\s{{ item.name | regex_escape }}-release$'
+    state: absent
+  loop: "{{ deploy_user_apps }}"
+  loop_control:
+    label: "{{ item.name }}"
+  when:
+    - deploy_user_enabled | bool
+    - item.state | default('present') == 'absent'
+  tags: [deploy_user]

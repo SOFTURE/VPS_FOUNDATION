@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- `traefik_edge` role: a shared Traefik edge in its own compose project and network, routing by Docker labels
+- `cloudflare_origin` role: only Cloudflare reaches published ports 80/443 (`DOCKER-USER`), ranges refreshed by a timer
+- `deploy_user` role: a non-sudo deploy user with one forced-command release key per app
+
 ## [1.11.0] - 2025-03-23
 
 ### Changed

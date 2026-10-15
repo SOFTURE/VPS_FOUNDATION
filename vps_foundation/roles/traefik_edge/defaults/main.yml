@@ -1,0 +1,27 @@
+---
+# A Traefik edge shared by every app on the server: its own compose project, its own network, routing by Docker
+# labels. Apps join the network (`external: true`) and label their services; nothing here names an app.
+traefik_edge_enabled: true
+traefik_edge_name: softure-edge
+traefik_edge_dir: "/srv/{{ traefik_edge_name }}"
+traefik_edge_network: "{{ traefik_edge_name }}"
+traefik_edge_image: traefik:v3.6
+traefik_edge_image_override: ""
+
+# ACME resolver the apps' routers name in `tls.certresolver`.
+traefik_edge_cert_resolver: letsencrypt
+traefik_edge_acme_email: ""
+# http (HTTP-01 on port 80) or dns (DNS-01 through Cloudflare; needs traefik_edge_cloudflare_dns_token).
+traefik_edge_acme_challenge: http
+traefik_edge_cloudflare_dns_token: ""
+
+# Only these ranges may set X-Forwarded-For / X-Real-IP (e.g. Cloudflare's); empty trusts no proxy.
+traefik_edge_trusted_ips: []
+
+traefik_edge_ports:
+  - "80:80"
+  - "443:443"
+traefik_edge_log_level: WARN
+# Access log in JSON on stdout, without client addresses and headers.
+traefik_edge_access_log: true
+traefik_edge_extra_args: []

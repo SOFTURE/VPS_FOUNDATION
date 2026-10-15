@@ -1,0 +1,24 @@
+---
+# A user that only runs releases: no sudo, member of `docker`, and one forced-command key per app.
+deploy_user_enabled: true
+deploy_user_name: deploy
+deploy_user_group: "{{ deploy_user_name }}"
+deploy_user_home: "/home/{{ deploy_user_name }}"
+deploy_user_shell: /bin/bash
+deploy_user_groups:
+  - docker
+
+# Folder that holds one subfolder per app; an app's forced command defaults to <root>/<app>/deploy.sh.
+deploy_user_app_root: /srv
+
+# One entry per app:
+#   - name: myapp                 # required, [a-z][a-z0-9-]*
+#     key: "ssh-ed25519 AAAA..."  # the public key (its comment is replaced); omit to keep the current line as it is
+#     command: /srv/myapp/deploy.sh  # optional
+#     state: present              # or absent: removes the app's line
+# Each app owns exactly one line in authorized_keys, recognised by its comment `<name>-release`. The line is added or
+# replaced in place; lines of other apps and keys added by hand are never touched.
+deploy_user_apps: []
+
+# What a release key must look like: one public key line (type, base64 body, optional comment).
+deploy_user_key_pattern: '^(ssh-ed25519|ssh-rsa|ecdsa-sha2-nistp[0-9]+|sk-ssh-ed25519@openssh.com) [A-Za-z0-9+/=]+( [^\n]*)?$'

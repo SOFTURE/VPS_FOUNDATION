@@ -1,0 +1,12 @@
+# {{ ansible_managed }}
+[Unit]
+Description=Cloudflare-only access to ports {{ cloudflare_origin_ports | join(', ') }}
+After=docker.service
+PartOf=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/{{ cloudflare_origin_name }}
+
+[Install]
+WantedBy=docker.service

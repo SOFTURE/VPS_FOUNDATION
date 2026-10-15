@@ -1,0 +1,40 @@
+---
+# Only Cloudflare may reach the published ports 80 and 443. UFW cannot do this for container ports (Docker's DNAT
+# runs before UFW's chains), so the rules live in DOCKER-USER. Installed once per host, refreshed by a timer.
+cloudflare_origin_enabled: true
+cloudflare_origin_name: softure-cloudflare-only
+cloudflare_origin_ranges_file: /srv/softure-edge/cloudflare-ips.txt
+cloudflare_origin_ports:
+  - 80
+  - 443
+# External interface; empty takes the default route's.
+cloudflare_origin_interface: ""
+cloudflare_origin_ips_url: https://www.cloudflare.com
+# systemd OnCalendar of the range refresh.
+cloudflare_origin_refresh_calendar: daily
+
+# Written to the ranges file when it does not exist yet, so the firewall closes the origin on the first run even
+# when the first download fails. The timer replaces them with Cloudflare's current lists.
+cloudflare_origin_seed_ranges:
+  - 173.245.48.0/20
+  - 103.21.244.0/22
+  - 103.22.200.0/22
+  - 103.31.4.0/22
+  - 141.101.64.0/18
+  - 108.162.192.0/18
+  - 190.93.240.0/20
+  - 188.114.96.0/20
+  - 197.234.240.0/22
+  - 198.41.128.0/17
+  - 162.158.0.0/15
+  - 104.16.0.0/13
+  - 104.24.0.0/14
+  - 172.64.0.0/13
+  - 131.0.72.0/22
+  - 2400:cb00::/32
+  - 2606:4700::/32
+  - 2803:f800::/32
+  - 2405:b500::/32
+  - 2405:8100::/32
+  - 2a06:98c0::/29
+  - 2c0f:f248::/32

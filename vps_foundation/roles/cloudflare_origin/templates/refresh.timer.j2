@@ -1,0 +1,11 @@
+# {{ ansible_managed }}
+[Unit]
+Description=Refresh Cloudflare ranges ({{ cloudflare_origin_refresh_calendar }})
+
+[Timer]
+OnCalendar={{ cloudflare_origin_refresh_calendar }}
+RandomizedDelaySec=1h
+Persistent=true
+
+[Install]
+WantedBy=timers.target

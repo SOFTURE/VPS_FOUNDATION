@@ -1,0 +1,19 @@
+---
+galaxy_info:
+  role_name: traefik_edge
+  author: Jarmatys
+  description: Shared Traefik edge (own compose project and network, Docker label routing, ACME, trusted proxy ranges)
+  license: MIT
+  min_ansible_version: "2.14"
+  platforms:
+    - name: Ubuntu
+      versions:
+        - jammy
+        - noble
+  galaxy_tags:
+    - traefik
+    - proxy
+    - docker
+    - https
+
+dependencies: []

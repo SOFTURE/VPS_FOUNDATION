@@ -1,0 +1,9 @@
+---
+- name: Reload systemd for cloudflare_origin
+  ansible.builtin.systemd_service:
+    daemon_reload: true
+
+- name: Apply Cloudflare origin firewall
+  ansible.builtin.systemd_service:
+    name: "{{ cloudflare_origin_name }}.service"
+    state: restarted

@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+# {{ ansible_managed }}
+# Refreshes {{ cloudflare_origin_ranges_file }} from Cloudflare's published lists (role
+# softure.vps_foundation.cloudflare_origin), run by {{ cloudflare_origin_name }}-refresh.timer. It writes the file
+# only when the lists changed, by a rename; {{ cloudflare_origin_name }}.path sees the change and re-applies the
+# firewall.
+#
+# A list with a line that is not a CIDR, a /0, or no IPv4 range is refused. A failed download keeps the ranges
+# already there (a warning) and fails only when there are none yet.
+set -euo pipefail
+
+RANGES_FILE="${CLOUDFLARE_RANGES_FILE:-{{ cloudflare_origin_ranges_file }}}"
+SOURCE="${CLOUDFLARE_IPS_URL:-{{ cloudflare_origin_ips_url }}}"
+{% raw %}
+IPV4_RANGE='^([0-9]{1,3}\.){3}[0-9]{1,3}/([1-9]|[12][0-9]|3[0-2])$'
+IPV6_RANGE='^[0-9a-fA-F:]*:[0-9a-fA-F:]*/([1-9]|[1-9][0-9]|1[01][0-9]|12[0-8])$'
+
+fail() {
+  echo "cloudflare-refresh: $1" >&2
+  exit 1
+}
+
+work="$(mktemp -d)"
+trap 'rm -rf "$work"' EXIT
+
+# Downloads one list (4 or 6) into $work/v<family>; false when the download fails.
+download() {
+  curl --fail --silent --show-error --max-time 30 --output "$work/v$1" "$SOURCE/ips-v$1"
+}
+
+if ! download 4 || ! download 6; then
+  if [ -s "$RANGES_FILE" ]; then
+    echo "cloudflare-refresh: warning: cannot download Cloudflare's ranges; $RANGES_FILE stays as it is." >&2
+    exit 0
+  fi
+  fail "cannot download Cloudflare's ranges, and there are none in $RANGES_FILE yet."
+fi
+
+ipv4_count=0
+: > "$work/ranges"
+for family in 4 6; do
+  while IFS= read -r range || [ -n "$range" ]; do
+    range="${range%$'\r'}"
+    if [ -z "$range" ]; then continue; fi
+    if [ "$family" = 4 ] && [[ "$range" =~ $IPV4_RANGE ]]; then
+      ipv4_count=$((ipv4_count + 1))
+    elif [ "$family" != 6 ] || [[ ! "$range" =~ $IPV6_RANGE ]]; then
+      fail "Cloudflare's IPv$family list holds a line that is not an allowed CIDR range: $range"
+    fi
+    printf '%s\n' "$range" >> "$work/ranges"
+  done < "$work/v$family"
+done
+if [ "$ipv4_count" -eq 0 ]; then fail "Cloudflare's IPv4 list is empty; $RANGES_FILE stays as it is."; fi
+
+if [ -f "$RANGES_FILE" ] && cmp -s "$work/ranges" "$RANGES_FILE"; then
+  echo "cloudflare-refresh: ranges unchanged ($(wc -l < "$RANGES_FILE" | tr -d ' ') in $RANGES_FILE)."
+else
+  # A rename, so the firewall never reads a half-written file.
+  cp "$work/ranges" "$RANGES_FILE.tmp"
+  chmod 0644 "$RANGES_FILE.tmp"
+  mv -f "$RANGES_FILE.tmp" "$RANGES_FILE"
+  echo "cloudflare-refresh: wrote $(wc -l < "$RANGES_FILE" | tr -d ' ') ranges to $RANGES_FILE."
+fi
+{% endraw %}

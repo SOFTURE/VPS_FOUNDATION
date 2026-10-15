@@ -36,6 +36,9 @@ collections:
 | `cronicle` | Cronicle task scheduler with web UI |
 | `redis` | Redis container with password auth and AOF persistence |
 | `usertour` | Self-hosted UserTour (product tours, checklists, tooltips) |
+| `traefik_edge` | Shared Traefik edge: its own compose project and network, Docker label routing, ACME, trusted proxy ranges |
+| `cloudflare_origin` | Only Cloudflare reaches published ports 80/443 (`DOCKER-USER` rules), ranges refreshed by a systemd timer |
+| `deploy_user` | Non-sudo deploy user whose `authorized_keys` holds one forced-command release key per app |
 
 ## Custom container images
 
@@ -101,6 +104,42 @@ vars:
     services_supertokens_enabled: true
     services_cronicle_enabled: true
     cronicle_secret_key: "{{ lookup('env', 'CRONICLE_SECRET_KEY') }}"
+```
+
+## Shared app edge
+
+Three roles for a server that hosts several apps, each deployed by its own release pipeline. None of them names an
+app: every shared name is a variable with a generic default.
+
+| Role | What it owns | Main variables (defaults) |
+|------|--------------|---------------------------|
+| `traefik_edge` | `/srv/softure-edge/docker-compose.yml` (compose project `softure-edge`) and the network `softure-edge`. Apps join that network as `external` and route with labels (`traefik.enable=true`, `tls.certresolver=letsencrypt`); `exposedByDefault` is off. HTTP redirects to HTTPS, `--ping` health check, JSON access log without client addresses | `traefik_edge_name`, `traefik_edge_network`, `traefik_edge_cert_resolver` (`letsencrypt`), `traefik_edge_acme_email` (required), `traefik_edge_acme_challenge` (`http`, or `dns` with `traefik_edge_cloudflare_dns_token`), `traefik_edge_trusted_ips` |
+| `cloudflare_origin` | `/usr/local/sbin/softure-cloudflare-only` with its `.service` (runs on every Docker start) and `.path` (re-runs when the ranges change), `/usr/local/sbin/softure-cloudflare-only-refresh` with its daily `.timer`, the ranges file (seeded from the role's list) | `cloudflare_origin_name`, `cloudflare_origin_ranges_file` (`/srv/softure-edge/cloudflare-ips.txt`), `cloudflare_origin_ports` (`[80, 443]`), `cloudflare_origin_interface` (default route's), `cloudflare_origin_refresh_calendar` (`daily`) |
+| `deploy_user` | the user `deploy` (no sudo, in `docker`) and one line per app in its `authorized_keys`: `command="/srv/<app>/deploy.sh",restrict <key> <app>-release`. A line is added or replaced by its comment, never duplicated; other lines stay; `state: absent` removes it | `deploy_user_name`, `deploy_user_apps: [{ name, key?, command?, state? }]`, `deploy_user_app_root` (`/srv`) |
+
+UFW does not filter traffic to published container ports (Docker's DNAT runs before UFW's chains), which is why
+`cloudflare_origin` works in `DOCKER-USER`. The deploy user must also be in `vps_ssh_allowed_users`, or sshd's
+`AllowUsers` turns it away. `deploy_user` runs after `docker_engine` (it joins the `docker` group).
+
+```yaml
+- import_playbook: softure.vps_foundation.vps_bootstrap
+  vars:
+    vps_app_user: admin
+    vps_ssh_allowed_users: [admin, deploy]
+    vps_github_actions_ssh_required: false
+
+- name: Shared app edge
+  hosts: all
+  become: true
+  roles:
+    - role: softure.vps_foundation.deploy_user
+      vars:
+        deploy_user_apps:
+          - { name: myapp, key: "ssh-ed25519 AAAA... any-comment" }
+    - role: softure.vps_foundation.traefik_edge
+      vars:
+        traefik_edge_acme_email: ops@example.com
+    - role: softure.vps_foundation.cloudflare_origin
 ```
 
 ## Quick Start

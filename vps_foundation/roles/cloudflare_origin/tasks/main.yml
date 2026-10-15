@@ -1,0 +1,93 @@
+---
+- name: Validate Cloudflare origin variables
+  ansible.builtin.assert:
+    that:
+      - cloudflare_origin_name is match('^[a-z0-9][a-z0-9_-]*$')
+      - cloudflare_origin_ranges_file is match('^/')
+      - cloudflare_origin_ports | length > 0
+      - cloudflare_origin_seed_ranges | length > 0
+    fail_msg: "cloudflare_origin needs a unit name, an absolute ranges file, ports and seed ranges."
+  when: cloudflare_origin_enabled | bool
+  tags: [cloudflare_origin, firewall]
+
+- name: Install packages of the Cloudflare origin firewall
+  ansible.builtin.apt:
+    name: [iptables, iproute2, curl]
+    state: present
+  when: cloudflare_origin_enabled | bool
+  tags: [cloudflare_origin, firewall]
+
+- name: Create folder of the ranges file
+  ansible.builtin.file:
+    path: "{{ cloudflare_origin_ranges_file | dirname }}"
+    state: directory
+    mode: "0755"
+  when: cloudflare_origin_enabled | bool
+  tags: [cloudflare_origin, firewall]
+
+- name: Seed the ranges file when it does not exist yet
+  ansible.builtin.copy:
+    content: "{{ cloudflare_origin_seed_ranges | join('\n') }}\n"
+    dest: "{{ cloudflare_origin_ranges_file }}"
+    force: false
+    owner: root
+    group: root
+    mode: "0644"
+  when: cloudflare_origin_enabled | bool
+  tags: [cloudflare_origin, firewall]
+
+- name: Install the firewall and refresh scripts
+  ansible.builtin.template:
+    src: "{{ item.src }}"
+    dest: "/usr/local/sbin/{{ item.dest }}"
+    owner: root
+    group: root
+    mode: "0755"
+  loop:
+    - { src: firewall.sh.j2, dest: "{{ cloudflare_origin_name }}" }
+    - { src: refresh.sh.j2, dest: "{{ cloudflare_origin_name }}-refresh" }
+  notify: Apply Cloudflare origin firewall
+  when: cloudflare_origin_enabled | bool
+  tags: [cloudflare_origin, firewall]
+
+- name: Install the systemd units
+  ansible.builtin.template:
+    src: "{{ item.src }}"
+    dest: "/etc/systemd/system/{{ item.dest }}"
+    owner: root
+    group: root
+    mode: "0644"
+  loop:
+    - { src: firewall.service.j2, dest: "{{ cloudflare_origin_name }}.service" }
+    - { src: firewall.path.j2, dest: "{{ cloudflare_origin_name }}.path" }
+    - { src: refresh.service.j2, dest: "{{ cloudflare_origin_name }}-refresh.service" }
+    - { src: refresh.timer.j2, dest: "{{ cloudflare_origin_name }}-refresh.timer" }
+  notify:
+    - Reload systemd for cloudflare_origin
+    - Apply Cloudflare origin firewall
+  when: cloudflare_origin_enabled | bool
+  tags: [cloudflare_origin, firewall]
+
+- name: Reload systemd before enabling the units
+  ansible.builtin.meta: flush_handlers
+  tags: [cloudflare_origin, firewall]
+
+- name: Enable the path watch and the refresh timer
+  ansible.builtin.systemd_service:
+    name: "{{ item }}"
+    enabled: true
+    state: started
+  loop:
+    - "{{ cloudflare_origin_name }}.path"
+    - "{{ cloudflare_origin_name }}-refresh.timer"
+  when: cloudflare_origin_enabled | bool
+  tags: [cloudflare_origin, firewall]
+
+# Enabled only: a oneshot that stays inactive, so the path unit can start it again on every change. The handler
+# runs it whenever the script or a unit changed (the first install included).
+- name: Enable the firewall on every Docker start
+  ansible.builtin.systemd_service:
+    name: "{{ cloudflare_origin_name }}.service"
+    enabled: true
+  when: cloudflare_origin_enabled | bool
+  tags: [cloudflare_origin, firewall]

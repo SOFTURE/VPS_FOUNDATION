@@ -1,0 +1,18 @@
+---
+galaxy_info:
+  role_name: deploy_user
+  author: Jarmatys
+  description: Non-sudo deploy user whose authorized_keys holds one forced-command release key per app
+  license: MIT
+  min_ansible_version: "2.14"
+  platforms:
+    - name: Ubuntu
+      versions:
+        - jammy
+        - noble
+  galaxy_tags:
+    - ssh
+    - deploy
+    - docker
+
+dependencies: []

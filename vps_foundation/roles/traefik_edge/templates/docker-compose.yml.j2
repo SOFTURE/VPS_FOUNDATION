@@ -1,0 +1,77 @@
+# {{ ansible_managed }}
+# The shared edge of this server (role softure.vps_foundation.traefik_edge). Apps join the network
+# `{{ traefik_edge_network }}` as external and route by labels with `traefik.enable=true`; their routers use the
+# resolver `{{ traefik_edge_cert_resolver }}`. Never redeployed by an app.
+name: {{ traefik_edge_name }}
+
+services:
+  traefik:
+    image: {{ traefik_edge_final_image }}
+    restart: unless-stopped
+    command:
+      - --providers.docker=true
+      - --providers.docker.exposedByDefault=false
+      - --providers.docker.network={{ traefik_edge_network }}
+      - --entrypoints.web.address=:80
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+      - --entrypoints.websecure.address=:443
+{% if traefik_edge_trusted_ips | length > 0 %}
+      - --entrypoints.web.forwardedHeaders.trustedIPs={{ traefik_edge_trusted_ips | join(',') }}
+      - --entrypoints.websecure.forwardedHeaders.trustedIPs={{ traefik_edge_trusted_ips | join(',') }}
+{% endif %}
+{% if traefik_edge_acme_challenge == 'dns' %}
+      - --certificatesresolvers.{{ traefik_edge_cert_resolver }}.acme.dnschallenge.provider=cloudflare
+{% else %}
+      - --certificatesresolvers.{{ traefik_edge_cert_resolver }}.acme.httpchallenge.entrypoint=web
+{% endif %}
+      - --certificatesresolvers.{{ traefik_edge_cert_resolver }}.acme.storage=/letsencrypt/acme.json
+      - --certificatesresolvers.{{ traefik_edge_cert_resolver }}.acme.email={{ traefik_edge_acme_email }}
+      - --ping=true
+      - --log.level={{ traefik_edge_log_level }}
+{% if traefik_edge_access_log | bool %}
+      - --accesslog=true
+      - --accesslog.format=json
+      - --accesslog.fields.names.ClientAddr=drop
+      - --accesslog.fields.names.ClientHost=drop
+      - --accesslog.fields.names.ClientPort=drop
+      - --accesslog.fields.names.ClientUsername=drop
+      - --accesslog.fields.headers.defaultmode=drop
+{% endif %}
+{% for arg in traefik_edge_extra_args %}
+      - {{ arg }}
+{% endfor %}
+{% if traefik_edge_acme_challenge == 'dns' %}
+    environment:
+      CF_DNS_API_TOKEN_FILE: /run/secrets/cloudflare-dns-token
+    secrets:
+      - cloudflare-dns-token
+{% endif %}
+    ports:
+{% for port in traefik_edge_ports %}
+      - "{{ port }}"
+{% endfor %}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - letsencrypt:/letsencrypt
+    networks:
+      - edge
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck", "--ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  edge:
+    name: {{ traefik_edge_network }}
+    external: true
+
+volumes:
+  letsencrypt:
+{% if traefik_edge_acme_challenge == 'dns' %}
+
+secrets:
+  cloudflare-dns-token:
+    file: ./cloudflare-dns-token
+{% endif %}

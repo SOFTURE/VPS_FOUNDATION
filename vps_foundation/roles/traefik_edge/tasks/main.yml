@@ -1,0 +1,71 @@
+---
+- name: Validate Traefik edge variables
+  ansible.builtin.assert:
+    that:
+      - traefik_edge_name is match('^[a-z0-9][a-z0-9_-]*$')
+      - traefik_edge_network | length > 0
+      - traefik_edge_cert_resolver is match('^[A-Za-z0-9_-]+$')
+      - traefik_edge_acme_email is match('^[^@\s]+@[^@\s]+$')
+      - traefik_edge_acme_challenge in ['http', 'dns']
+      - traefik_edge_acme_challenge == 'http' or traefik_edge_cloudflare_dns_token | length > 0
+    fail_msg: >-
+      traefik_edge needs a compose project name, a network, a resolver name, traefik_edge_acme_email, and
+      traefik_edge_cloudflare_dns_token when traefik_edge_acme_challenge is dns.
+  when: traefik_edge_enabled | bool
+  tags: [traefik_edge, proxy]
+
+- name: Set Traefik edge image
+  ansible.builtin.set_fact:
+    traefik_edge_final_image: "{{ traefik_edge_image_override | default(traefik_edge_image, true) }}"
+  when: traefik_edge_enabled | bool
+  tags: [traefik_edge, proxy]
+
+- name: Create Traefik edge network
+  community.docker.docker_network:
+    name: "{{ traefik_edge_network }}"
+    driver: bridge
+    state: present
+  when: traefik_edge_enabled | bool
+  tags: [traefik_edge, proxy]
+
+- name: Create Traefik edge folder
+  ansible.builtin.file:
+    path: "{{ traefik_edge_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  when: traefik_edge_enabled | bool
+  tags: [traefik_edge, proxy]
+
+- name: Write Cloudflare DNS token for the ACME DNS challenge
+  ansible.builtin.copy:
+    content: "{{ traefik_edge_cloudflare_dns_token }}"
+    dest: "{{ traefik_edge_dir }}/cloudflare-dns-token"
+    owner: root
+    group: root
+    mode: "0600"
+  no_log: true
+  when:
+    - traefik_edge_enabled | bool
+    - traefik_edge_acme_challenge == 'dns'
+  tags: [traefik_edge, proxy]
+
+- name: Write Traefik edge compose file
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ traefik_edge_dir }}/docker-compose.yml"
+    owner: root
+    group: root
+    mode: "0644"
+  when: traefik_edge_enabled | bool
+  tags: [traefik_edge, proxy]
+
+- name: Start Traefik edge
+  community.docker.docker_compose_v2:
+    project_src: "{{ traefik_edge_dir }}"
+    state: present
+    wait: true
+    wait_timeout: 120
+  when: traefik_edge_enabled | bool and not ansible_check_mode
+  tags: [traefik_edge, proxy]

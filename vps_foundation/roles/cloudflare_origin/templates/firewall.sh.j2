@@ -1,0 +1,82 @@
+#!/usr/bin/env bash
+# {{ ansible_managed }}
+# Lets only Cloudflare reach ports {{ cloudflare_origin_ports | join(' and ') }} of this server (role
+# softure.vps_foundation.cloudflare_origin). Without it anyone who finds the server's address talks to the edge
+# directly, around Cloudflare, and can send any cf-connecting-ip header.
+#
+# It reads {{ cloudflare_origin_ranges_file }}, one CIDR per line, and runs again whenever that file changes
+# ({{ cloudflare_origin_name }}.path) and whenever Docker starts ({{ cloudflare_origin_name }}.service). A file with a
+# line that is not a CIDR, a /0, or no IPv4 range changes nothing and exits 1.
+#
+# The rules: a chain SOFTURE-CLOUDFLARE with one RETURN per range and a DROP at the end, jumped to from DOCKER-USER
+# (the chain Docker leaves to the admin; published ports never pass INPUT) for TCP whose original destination port
+# is one of the ports, arriving on the external interface. The DROP goes in first, so a refill never opens the
+# origin, only closes it for a moment. IPv6 uses ip6tables' DOCKER-USER when Docker manages ip6tables, else INPUT;
+# without IPv6 ranges or ip6tables it is left alone.
+set -euo pipefail
+
+RANGES_FILE="${CLOUDFLARE_RANGES_FILE:-{{ cloudflare_origin_ranges_file }}}"
+CHAIN=SOFTURE-CLOUDFLARE
+PORTS="{{ cloudflare_origin_ports | join(' ') }}"
+DEFAULT_INTERFACE="{{ cloudflare_origin_interface }}"
+{% raw %}
+IPV4_RANGE='^([0-9]{1,3}\.){3}[0-9]{1,3}/([1-9]|[12][0-9]|3[0-2])$'
+IPV6_RANGE='^[0-9a-fA-F:]*:[0-9a-fA-F:]*/([1-9]|[1-9][0-9]|1[01][0-9]|12[0-8])$'
+
+fail() {
+  echo "cloudflare-only: $1" >&2
+  exit 1
+}
+
+if [ ! -s "$RANGES_FILE" ]; then fail "no ranges in $RANGES_FILE."; fi
+
+ipv4_ranges=()
+ipv6_ranges=()
+while IFS= read -r range || [ -n "$range" ]; do
+  if [ -z "$range" ]; then continue; fi
+  if [[ "$range" =~ $IPV4_RANGE ]]; then
+    ipv4_ranges+=("$range")
+  elif [[ "$range" =~ $IPV6_RANGE ]]; then
+    ipv6_ranges+=("$range")
+  else
+    fail "$RANGES_FILE holds a line that is not an allowed CIDR range: $range"
+  fi
+done < "$RANGES_FILE"
+if [ "${#ipv4_ranges[@]}" -eq 0 ]; then fail "$RANGES_FILE has no IPv4 range; nothing was changed."; fi
+
+interface="${CLOUDFLARE_ONLY_INTERFACE:-$DEFAULT_INTERFACE}"
+if [ -z "$interface" ]; then
+  interface="$(ip route show default | awk '{ for (i = 1; i < NF; i++) if ($i == "dev") { print $(i + 1); exit } }')"
+fi
+if [[ ! "$interface" =~ ^[A-Za-z0-9_.:@-]+$ ]]; then fail "cannot tell the external interface; set CLOUDFLARE_ONLY_INTERFACE."; fi
+
+# Fills the chain of one family and jumps to it from the parent chain: tool, parent, then the ranges.
+apply_rules() {
+  local tool="$1" parent="$2" range port
+  shift 2
+  "$tool" -w -N "$CHAIN" 2> /dev/null || true
+  "$tool" -w -F "$CHAIN"
+  "$tool" -w -A "$CHAIN" -j DROP
+  for range in "$@"; do
+    "$tool" -w -I "$CHAIN" 1 -s "$range" -j RETURN
+  done
+  for port in $PORTS; do
+    local jump=(-i "$interface" -p tcp -m conntrack --ctorigdstport "$port" --ctdir ORIGINAL -j "$CHAIN")
+    if ! "$tool" -w -C "$parent" "${jump[@]}" 2> /dev/null; then "$tool" -w -I "$parent" 1 "${jump[@]}"; fi
+  done
+  echo "cloudflare-only: $tool $parent lets $# ranges reach ports ${PORTS// /, } on $interface."
+}
+
+if ! iptables -w -S DOCKER-USER > /dev/null 2>&1; then fail "iptables has no DOCKER-USER chain; is Docker running?"; fi
+apply_rules iptables DOCKER-USER "${ipv4_ranges[@]}"
+
+if [ "${#ipv6_ranges[@]}" -eq 0 ]; then
+  echo "cloudflare-only: no IPv6 ranges; IPv6 left as it is."
+elif ! command -v ip6tables > /dev/null 2>&1; then
+  echo "cloudflare-only: no ip6tables; IPv6 left as it is."
+elif ip6tables -w -S DOCKER-USER > /dev/null 2>&1; then
+  apply_rules ip6tables DOCKER-USER "${ipv6_ranges[@]}"
+else
+  apply_rules ip6tables INPUT "${ipv6_ranges[@]}"
+fi
+{% endraw %}

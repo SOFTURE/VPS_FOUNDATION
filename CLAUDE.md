@@ -42,7 +42,10 @@ vps_foundation/
     ├── portainer/                # Docker management UI
     ├── supertokens/              # Authentication
     ├── typesense/                # Search engine
-    └── sqlpad/                   # SQL query tool
+    ├── sqlpad/                   # SQL query tool
+    ├── traefik_edge/             # Shared Traefik edge (label routing)
+    ├── cloudflare_origin/        # Cloudflare-only firewall for ports 80/443
+    └── deploy_user/              # Non-sudo user with forced-command release keys
 ```
 
 ## Role Conventions

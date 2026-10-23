@@ -64,5 +64,5 @@ vps_base_packages:
   - acl
 vps_additional_packages: []
 
-vps_auto_updates_enabled: false
-vps_unattended_upgrades_enabled: false
+vps_auto_updates_enabled: true
+vps_unattended_upgrades_enabled: true

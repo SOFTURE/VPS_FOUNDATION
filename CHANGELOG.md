@@ -12,6 +12,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `cloudflare_origin` role: only Cloudflare reaches published ports 80/443 (`DOCKER-USER`), ranges refreshed by a timer
 - `deploy_user` role: a non-sudo deploy user with one forced-command release key per app
 
+### Changed
+- Unattended security upgrades are now enabled by default (`vps_auto_updates_enabled: true`,
+  `vps_unattended_upgrades_enabled: true`); Docker packages stay excluded and there is no automatic reboot
+
+### Fixed
+- `acl` is installed with the base packages, so `become_user` to an unprivileged user works on Ubuntu 26.04
+
 ## [1.11.0] - 2025-03-23
 
 ### Changed

@@ -69,6 +69,13 @@ vars:
   typesense_image_override: typesense/typesense:0.26.0
 ```
 
+## Published ports and the firewall
+
+Ports published by Docker bypass UFW. On a host where nothing should be reachable from outside except
+through a reverse proxy (e.g. a CI runner box), set `docker_default_bind_ip: 127.0.0.1`: ports published
+without an address (`"5432:5432"`) then listen on localhost only. Leave it empty (the default) on hosts
+whose reverse proxy publishes `"80:80"`/`"443:443"`, or give those ports an explicit `0.0.0.0:` address.
+
 ## Playbooks
 
 ### VPS Bootstrap

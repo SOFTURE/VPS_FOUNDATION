@@ -2,5 +2,8 @@
   "log-driver": "{{ docker_daemon_config['log-driver'] }}",
   "log-opts": {{ docker_daemon_config['log-opts'] | to_nice_json }},
   "storage-driver": "{{ docker_daemon_config['storage-driver'] }}",
+{% if docker_default_bind_ip | length > 0 %}
+  "ip": "{{ docker_default_bind_ip }}",
+{% endif %}
   "default-ulimits": {{ docker_daemon_config['default-ulimits'] | to_nice_json }}
 }

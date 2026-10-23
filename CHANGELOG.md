@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `traefik_edge` role: a shared Traefik edge in its own compose project and network, routing by Docker labels
 - `cloudflare_origin` role: only Cloudflare reaches published ports 80/443 (`DOCKER-USER`), ranges refreshed by a timer
 - `deploy_user` role: a non-sudo deploy user with one forced-command release key per app
+- `docker_default_bind_ip` in `docker_engine`: default host address for published ports (e.g. `127.0.0.1`,
+  since published ports bypass UFW); empty by default, which keeps Docker's all-interfaces binding
 
 ### Changed
 - Unattended security upgrades are now enabled by default (`vps_auto_updates_enabled: true`,

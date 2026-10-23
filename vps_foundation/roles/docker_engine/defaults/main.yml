@@ -18,6 +18,11 @@ docker_daemon_config:
       Name: "nofile"
       Soft: 65536
 
+# Host address for published ports that do not name one ("8080:80"). Published ports bypass UFW, so
+# "127.0.0.1" keeps them off the internet unless a container binds "0.0.0.0:..." explicitly.
+# Empty keeps Docker's default (all interfaces); a reverse proxy publishing "80:80" needs that.
+docker_default_bind_ip: ""
+
 docker_users:
   - "{{ vps_app_user }}"
 docker_additional_users: []

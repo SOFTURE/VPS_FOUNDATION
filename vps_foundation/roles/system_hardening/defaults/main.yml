@@ -61,6 +61,7 @@ vps_base_packages:
   - gnupg
   - lsb-release
   - cron
+  - acl
 vps_additional_packages: []
 
 vps_auto_updates_enabled: false
